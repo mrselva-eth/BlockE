@@ -3,20 +3,11 @@ import type { Metadata } from 'next'
 import { WalletProvider } from '@/contexts/WalletContext'
 import NavbarContent from '@/components/NavbarContent'
 import NetworkWarningModal from '@/components/NetworkWarningModal'
-import WalletConnectedAnimation from '@/components/WalletConnectedAnimation'
-import { useWallet } from '@/contexts/WalletContext'
+import AnimationWrapper from '@/components/AnimationWrapper'
 
 export const metadata: Metadata = {
   title: 'BlockE',
   description: 'Web 3.0 Analytics Platform',
-}
-
-function AnimationWrapper() {
-  const { showSuccessAnimation, setShowSuccessAnimation } = useWallet()
-
-  return showSuccessAnimation ? (
-    <WalletConnectedAnimation onAnimationComplete={() => setShowSuccessAnimation(false)} />
-  ) : null
 }
 
 export default function RootLayout({

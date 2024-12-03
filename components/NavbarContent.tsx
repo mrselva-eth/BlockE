@@ -47,7 +47,7 @@ export default function NavbarContent() {
         <h1 className="ml-2 text-xl sm:text-2xl font-bold text-gray-800">BlockE</h1>
       </div>
       {isConnected && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <button className="px-2 py-1 sm:px-4 sm:py-2 text-sm sm:text-base bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
             BlockE User ID
           </button>
@@ -59,10 +59,19 @@ export default function NavbarContent() {
               <User size={24} />
             </button>
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-10">
                 <div className="px-4 py-2 text-sm text-gray-700">
-                  <p className="font-semibold">Connected Wallet:</p>
+                  <div className="flex items-center mb-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                    <p className="font-semibold">Connected Wallet:</p>
+                  </div>
                   <p>{address ? truncateAddress(address) : 'Not connected'}</p>
+                </div>
+                <div className="px-4 py-2 text-sm text-gray-700 border-t border-gray-100">
+                  <div className="flex items-center">
+                    <Image src="/ethereum.png" alt="Ethereum logo" width={16} height={16} className="mr-2" />
+                    <p>Network: Ethereum Mainnet</p>
+                  </div>
                 </div>
                 <button
                   onClick={handleLogout}
