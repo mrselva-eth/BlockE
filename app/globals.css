@@ -4,7 +4,9 @@
 
 /* Hide Next.js development indicators */
 [data-nextjs-route-announcer],
-[data-next-route-announcer] {
+[data-next-route-announcer],
+#__next-route-announcer__,
+[data-next-development-indicator] {
   display: none !important;
 }
 
