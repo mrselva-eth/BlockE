@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 
@@ -19,34 +19,26 @@ const sidebarItems = [
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      setMousePosition({ x: event.clientX, y: event.clientY })
-      if (event.clientX < 50) {
-        setIsOpen(true)
-      } else if (event.clientX > 250 && isOpen) {
-        setIsOpen(false)
-      }
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [isOpen])
 
   return (
     <>
-      <button
-        className="fixed top-4 left-4 z-50 text-gray-600 hover:text-gray-800"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <Menu size={24} />
-      </button>
+      {!isOpen && (
+        <button
+          className="fixed left-4 top-1/2 transform -translate-y-1/2 z-40 text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-all duration-300 group"
+          onClick={() => setIsOpen(true)}
+          onMouseEnter={() => setIsOpen(true)}
+        >
+          <Menu size={24} className="animate-pulse" />
+          <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            Menu
+          </span>
+        </button>
+      )}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-40 ${
+        className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-30 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
+        onMouseLeave={() => setIsOpen(false)}
       >
         <button
           className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
