@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import Image from 'next/image'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { useWallet } from '@/contexts/WalletContext'
@@ -37,21 +37,33 @@ const wallets = [
 export default function WalletModal() {
   const { showWalletModal, setShowWalletModal, connectWallet, verifyCaptcha } = useWallet()
   const recaptchaRef = useRef<ReCAPTCHA>(null)
+  const [error, setError] = useState<string | null>(null)
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 
   const handleWalletClick = async (walletId: string) => {
-    const token = await recaptchaRef.current?.executeAsync()
-    if (token !== undefined) {
-      const isVerified = await verifyCaptcha(token)
+    setError(null)
     
-      if (isVerified) {
-        try {
+    if (!siteKey) {
+      console.error('reCAPTCHA site key is not configured')
+      setError('Wallet connection is temporarily unavailable')
+      return
+    }
+
+    try {
+      const token = await recaptchaRef.current?.executeAsync()
+      if (token) {
+        const isVerified = await verifyCaptcha(token)
+        if (isVerified) {
           await connectWallet(walletId)
-        } catch (error) {
-          console.error('Failed to connect wallet:', error)
+        } else {
+          setError('CAPTCHA verification failed')
         }
+      } else {
+        setError('CAPTCHA verification failed')
       }
-    } else {
-      console.error('Failed to execute reCAPTCHA')
+    } catch (error) {
+      console.error('Failed to connect wallet:', error)
+      setError('Failed to connect wallet. Please try again.')
     }
   }
 
@@ -70,6 +82,12 @@ export default function WalletModal() {
           </button>
         </div>
         
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+
         <div className="space-y-4">
           {wallets.map((wallet) => (
             <button
@@ -89,11 +107,13 @@ export default function WalletModal() {
           ))}
         </div>
 
-        <ReCAPTCHA
-          ref={recaptchaRef}
-          size="invisible"
-          sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
-        />
+        {siteKey && (
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            size="invisible"
+            sitekey={siteKey}
+          />
+        )}
       </div>
     </div>
   )

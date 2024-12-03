@@ -5,8 +5,6 @@ import { ethers } from 'ethers'
 import Web3Modal from 'web3modal'
 import CoinbaseWalletSDK from '@coinbase/wallet-sdk'
 
-declare module 'react-google-recaptcha';
-
 interface WalletContextType {
   signer: ethers.Signer | null
   address: string | null
@@ -15,7 +13,7 @@ interface WalletContextType {
   setShowWalletModal: (show: boolean) => void
   connectWallet: (providerType: string) => Promise<void>
   disconnectWallet: () => void
-  verifyCaptcha: (token: string | null) => Promise<boolean>
+  verifyCaptcha: (token: string) => Promise<boolean>
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
@@ -27,8 +25,7 @@ const providerOptions = {
       appName: "BlockE",
       infuraId: process.env.NEXT_PUBLIC_INFURA_ID
     }
-  },
-  // Remove the walletconnect option for now
+  }
 }
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -54,9 +51,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [])
 
-  const verifyCaptcha = async (token: string | null): Promise<boolean> => {
-    if (!token) return false
-    
+  const verifyCaptcha = async (token: string): Promise<boolean> => {
     try {
       const response = await fetch('/api/verify-captcha', {
         method: 'POST',
@@ -66,6 +61,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         body: JSON.stringify({ token }),
       })
       
+      if (!response.ok) {
+        throw new Error('Failed to verify CAPTCHA')
+      }
+
       const data = await response.json()
       return data.success
     } catch (error) {
