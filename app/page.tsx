@@ -4,10 +4,22 @@ import { useEffect } from 'react'
 import Image from 'next/image'
 import Sidebar from '../components/Sidebar'
 import WalletModal from '../components/WalletModal'
+import SocialMediaLinks from '../components/SocialMediaLinks'
 import { useWallet } from '@/contexts/WalletContext'
 
 export default function Home() {
   const { isConnected, setShowWalletModal } = useWallet()
+
+  const handleConnectWallet = () => {
+    setShowWalletModal(true)
+  }
+
+  useEffect(() => {
+    if (!isConnected) {
+      // Reset any necessary state or redirect to home page
+      // This effect will run when the user disconnects their wallet
+    }
+  }, [isConnected])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -34,7 +46,7 @@ export default function Home() {
         </p>
         {!isConnected && (
           <button 
-            onClick={() => setShowWalletModal(true)}
+            onClick={handleConnectWallet}
             className="px-6 py-3 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors text-lg font-semibold"
           >
             Connect Wallet
@@ -42,6 +54,7 @@ export default function Home() {
         )}
       </main>
       <WalletModal />
+      <SocialMediaLinks />
     </div>
   )
 }

@@ -14,9 +14,15 @@ interface WalletContextType {
   connectWallet: (providerType: string) => Promise<void>
   disconnectWallet: () => void
   verifyCaptcha: (token: string) => Promise<boolean>
+  isCorrectNetwork: boolean
+  switchNetwork: () => Promise<void>
+  showSuccessAnimation: boolean
+  setShowSuccessAnimation: (show: boolean) => void
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
+
+const ETH_MAINNET_CHAIN_ID = '0x1'
 
 const providerOptions = {
   coinbasewallet: {
@@ -33,6 +39,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [address, setAddress] = useState<string | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [showWalletModal, setShowWalletModal] = useState(false)
+  const [isCorrectNetwork, setIsCorrectNetwork] = useState(false)
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
   const web3ModalRef = useRef<Web3Modal | null>(null)
 
   useEffect(() => {
@@ -70,6 +78,34 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch (error) {
       console.error('CAPTCHA verification failed:', error)
       return false
+    }
+  }
+
+  const checkNetwork = async (provider: any) => {
+    if (provider.request) {
+      const chainId = await provider.request({ method: 'eth_chainId' })
+      const isCorrect = chainId === ETH_MAINNET_CHAIN_ID
+      setIsCorrectNetwork(isCorrect)
+      return isCorrect
+    }
+    return false
+  }
+
+  const switchNetwork = async () => {
+    if (typeof window !== 'undefined' && window.ethereum) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: ETH_MAINNET_CHAIN_ID }],
+        })
+        setIsCorrectNetwork(true)
+      } catch (error: any) {
+        if (error.code === 4902) {
+          throw new Error("This wallet doesn't have Ethereum Mainnet added. Please add it manually and try again.")
+        } else {
+          throw new Error("Failed to switch to the Ethereum Mainnet.")
+        }
+      }
     }
   }
 
@@ -112,11 +148,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setAddress(address)
       setIsConnected(true)
       setShowWalletModal(false)
+      setShowSuccessAnimation(true)
       
       if (provider.on) {
         provider.on('accountsChanged', handleAccountsChanged)
         provider.on('chainChanged', handleChainChanged)
       }
+
+      // Check network after successful connection
+      await checkNetwork(provider)
     } catch (error) {
       console.error("Failed to connect:", error)
       disconnectWallet()
@@ -131,6 +171,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSigner(null)
     setAddress(null)
     setIsConnected(false)
+    setIsCorrectNetwork(false)
+    setShowSuccessAnimation(false)
     
     if (typeof window !== 'undefined' && window.ethereum) {
       window.ethereum.removeListener('accountsChanged', handleAccountsChanged)
@@ -146,8 +188,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }
 
-  const handleChainChanged = () => {
-    window.location.reload()
+  const handleChainChanged = async () => {
+    if (window.ethereum) {
+      await checkNetwork(window.ethereum)
+    }
   }
 
   return (
@@ -160,7 +204,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setShowWalletModal,
         connectWallet, 
         disconnectWallet,
-        verifyCaptcha
+        verifyCaptcha,
+        isCorrectNetwork,
+        switchNetwork,
+        showSuccessAnimation,
+        setShowSuccessAnimation
       }}
     >
       {children}

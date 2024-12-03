@@ -10,3 +10,14 @@
   display: none !important;
 }
 
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotateZ(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(1000px) rotateZ(720deg);
+    opacity: 0;
+  }
+}
+
