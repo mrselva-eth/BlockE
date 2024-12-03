@@ -1,8 +1,5 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'BlockE',
@@ -16,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans antialiased">
         <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-50">
           <div className="flex justify-between items-center h-full px-4 max-w-7xl mx-auto">
             <div className="flex items-center">
