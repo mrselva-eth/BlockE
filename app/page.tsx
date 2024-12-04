@@ -47,7 +47,7 @@ export default function Home() {
         {!isConnected && (
           <button 
             onClick={handleConnectWallet}
-            className="px-6 py-3 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors text-lg font-semibold"
+            className="wallet-connect-btn"
           >
             Connect Wallet
           </button>

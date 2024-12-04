@@ -47,10 +47,12 @@ export default function NavbarContent() {
         <h1 className="ml-2 text-xl sm:text-2xl font-bold text-gray-800">BlockE</h1>
       </div>
       {isConnected && (
-        <div className="flex items-center gap-4">
-          <button className="px-2 py-1 sm:px-4 sm:py-2 text-sm sm:text-base bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
-            BlockE User ID
-          </button>
+        <div className="flex items-center gap-6"> {/* Increased gap from 4 to 6 */}
+          <div className="blocke-user-id-container">
+            <button className="blocke-user-id-btn">
+              BlockE User ID
+            </button>
+          </div>
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
