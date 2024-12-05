@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
-import NetworkWarningModal from './NetworkWarningModal'
 import AnimationWrapper from './AnimationWrapper'
 import AutoDisconnectAlert from './AutoDisconnectAlert'
 
@@ -44,7 +43,6 @@ export default function WalletComponentsWrapper() {
 
   return (
     <>
-      <NetworkWarningModal />
       <AnimationWrapper />
       {showDisconnectAlert && (
         <AutoDisconnectAlert 

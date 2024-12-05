@@ -1,6 +1,197 @@
-/* Add this to your existing globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.btn-23,
+/* Hide Next.js development indicators */
+[data-nextjs-route-announcer],
+[data-next-route-announcer],
+#__next-route-announcer__,
+[data-next-development-indicator] {
+  display: none !important;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-100vh) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes rotateCircle {
+  0% { transform: rotate(180deg); }
+  33% { transform: rotate(0deg); }
+  66% { transform: rotate(90deg); }
+  100% { transform: rotate(180deg); }
+}
+
+@keyframes scale-bounce {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Wallet Connect Button */
+.wallet-connect-btn {
+  background-color: #444141;
+  border-radius: 50px;
+  color: #fff;
+  cursor: pointer;
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border: none;
+  transition: background-image 0.3s ease;
+}
+
+.wallet-connect-btn:hover {
+  background-image: linear-gradient(90deg, #53cbef 0%, #dcc66c 50%, #ffa3b6 75%, #53cbef 100%);
+  animation: slidernbw 5s linear infinite;
+  color: #000;
+}
+
+@keyframes slidernbw {
+  to {
+    background-position: 20vw;
+  }
+}
+
+/* BlockE User ID Button */
+.blocke-user-id-btn {
+  font-size: 0.875rem;
+  padding: 0.4rem 0.8rem;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
+  font-weight: bold;
+  min-width: 120px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5em;
+  border: none;
+  background-color: #000;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 2px 2px 3px #000000b4;
+}
+
+.blocke-user-id-container {
+  position: relative;
+  padding: 1px; /* Reduced from 2px */
+  background: linear-gradient(90deg, #03a9f4, #f441a5);
+  border-radius: 0.6em;
+  transition: all 0.4s ease;
+}
+
+.blocke-user-id-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border-radius: 0.6em;
+  z-index: -10;
+  filter: blur(0);
+  transition: filter 0.4s ease;
+}
+
+.blocke-user-id-container:hover::before {
+  background: linear-gradient(90deg, #03a9f4, #f441a5);
+  filter: blur(0.4em);
+}
+
+.blocke-user-id-container:active::before {
+  filter: blur(0.1em);
+}
+
+.animate-scale-bounce {
+  animation: scale-bounce 1s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+/* Add styles for the mint button animation */
+.btn-23 {
+  font-size: 0.875rem;
+  padding: 0.4rem 0.8rem;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
+  font-weight: bold;
+  min-width: 120px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: button;
+  background-color: #000;
+  background-image: none;
+  color: #fff;
+  cursor: pointer;
+  /*font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif,
+    Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;*/
+  /*font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;*/
+  margin: 0;
+  /*padding: 0.8rem 1.5rem;*/
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  border-radius: 99rem;
+  border: 2px solid transparent;
+  overflow: hidden;
+  position: relative;
+}
+
+.btn-23:hover {
+  background-color: #fff;
+  color: #000;
+  border: 2px solid #000;
+}
+
+.btn-23 span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  inset: 0;
+  place-items: center;
+  position: absolute;
+  transition: opacity 0.2s ease;
+}
+
+.btn-23::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-23:hover::before {
+  opacity: 1;
+}
+
+.btn-23:hover span {
+  color: #000;
+}
+
 .btn-23 *,
 .btn-23 :after,
 .btn-23 :before,
@@ -10,23 +201,35 @@
   box-sizing: border-box;
 }
 
-.btn-23 {
-  -webkit-tap-highlight-color: transparent;
-  -webkit-appearance: button;
-  background-color: #000;
-  background-image: none;
-  color: #fff;
-  cursor: pointer;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif,
-    Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
-  font-size: 100%;
-  font-weight: 900;
-  line-height: 1.5;
-  margin: 0;
-  -webkit-mask-image: -webkit-radial-gradient(#000, #fff);
-  padding: 0;
-  text-transform: uppercase;
+.btn-23 .marquee {
+  --spacing: 1em;
+  --start: 0em;
+  --end: 3em;
+  animation: marquee 1s linear infinite;
+  animation-play-state: paused;
+  opacity: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: max-content;
+  text-shadow: none; /* Remove text shadow */
+}
+
+.btn-23:hover .marquee {
+  animation-play-state: running;
+  opacity: 1;
+}
+
+.btn-23:hover .text {
+  opacity: 0;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .btn-23:disabled {
@@ -44,65 +247,5 @@
 
 .btn-23 [hidden] {
   display: none;
-}
-
-.btn-23 {
-  border-radius: 99rem;
-  border-width: 2px;
-  overflow: hidden;
-  padding: 0.8rem 3rem;
-  position: relative;
-}
-
-.btn-23 span {
-  display: grid;
-  inset: 0;
-  place-items: center;
-  position: absolute;
-  transition: opacity 0.2s ease;
-}
-
-.btn-23 .marquee {
-  --spacing: 5em;
-  --start: 0em;
-  --end: 5em;
-  -webkit-animation: marquee 1s linear infinite;
-  animation: marquee 1s linear infinite;
-  -webkit-animation-play-state: paused;
-  animation-play-state: paused;
-  opacity: 0;
-  position: relative;
-  text-shadow: #fff var(--spacing) 0, #fff calc(var(--spacing) * -1) 0,
-    #fff calc(var(--spacing) * -2) 0;
-}
-
-.btn-23:hover .marquee {
-  -webkit-animation-play-state: running;
-  animation-play-state: running;
-  opacity: 1;
-}
-
-.btn-23:hover .text {
-  opacity: 0;
-}
-
-@-webkit-keyframes marquee {
-  0% {
-    transform: translateX(var(--start));
-  }
-
-  to {
-    transform: translateX(var(--end));
-  }
-}
-
-@keyframes marquee {
-  0% {
-    transform: translateX(var(--start));
-  }
-
-  to {
-    transform: translateX(var(--end));
-  }
 }
 

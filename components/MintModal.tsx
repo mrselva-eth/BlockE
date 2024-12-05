@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import Image from 'next/image'
 
 interface MintModalProps {
   isOpen: boolean
@@ -12,6 +11,8 @@ interface MintModalProps {
   isMinting: boolean
   isSuccess: boolean
   needsPayment: boolean
+  onSwitch?: () => Promise<void>  
+  targetNetwork?: string  
 }
 
 export default function MintModal({ 
@@ -20,7 +21,9 @@ export default function MintModal({
   onMint, 
   isMinting, 
   isSuccess,
-  needsPayment 
+  needsPayment,
+  onSwitch,
+  targetNetwork
 }: MintModalProps) {
   const [showClose, setShowClose] = useState(false)
 
@@ -110,20 +113,26 @@ export default function MintModal({
               )}
             </div>
           ) : (
-            <button
-              onClick={onMint}
-              disabled={isMinting}
-              className="btn-23 w-full"
-            >
-              <span className="text">
-                {isMinting ? 'Minting BE...' : needsPayment ? 'Mint BE (10 MATIC)' : 'Mint BE'}
-              </span>
-              {isMinting && (
-                <span className="marquee">
-                  Minting BE... Minting BE... Minting BE...
-                </span>
+            <>
+              {targetNetwork ? (
+                <button
+                  onClick={onSwitch}
+                  className="btn-23 w-full mb-4"
+                >
+                  <span>Switch to {targetNetwork}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={onMint}
+                  disabled={isMinting}
+                  className="btn-23 w-full"
+                >
+                  <span>
+                    {isMinting ? 'Minting BE...' : needsPayment ? 'Mint BE (10 MATIC)' : 'Mint BE'}
+                  </span>
+                </button>
               )}
-            </button>
+            </>
           )}
         </div>
       </div>
