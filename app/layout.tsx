@@ -2,8 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { WalletProvider } from '@/contexts/WalletContext'
 import NavbarContent from '@/components/NavbarContent'
-import NetworkWarningModal from '@/components/NetworkWarningModal'
-import AnimationWrapper from '@/components/AnimationWrapper'
+import WalletComponentsWrapper from '@/components/WalletComponentsWrapper'
 
 export const metadata: Metadata = {
   title: 'BlockE',
@@ -25,8 +24,7 @@ export default function RootLayout({
           <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-50">
             <NavbarContent />
           </nav>
-          <NetworkWarningModal />
-          <AnimationWrapper />
+          <WalletComponentsWrapper />
           <main className="pt-16">
             {children}
           </main>

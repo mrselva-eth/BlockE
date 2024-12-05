@@ -40,6 +40,7 @@ export default function NavbarContent() {
             src="/blocke-logo.png"
             alt="BlockE Logo"
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-contain"
             priority
           />
@@ -47,7 +48,7 @@ export default function NavbarContent() {
         <h1 className="ml-2 text-xl sm:text-2xl font-bold text-gray-800">BlockE</h1>
       </div>
       {isConnected && (
-        <div className="flex items-center gap-6"> {/* Increased gap from 4 to 6 */}
+        <div className="flex items-center gap-6">
           <div className="blocke-user-id-container">
             <button className="blocke-user-id-btn">
               BlockE User ID

@@ -157,9 +157,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Check network after successful connection
       await checkNetwork(provider)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to connect:", error)
-      disconnectWallet()
+      if (error.message.includes("User rejected the request")) {
+        // Handle user rejection gracefully
+        console.log("User rejected the wallet connection request")
+        // You might want to show a user-friendly message here
+      } else {
+        // Handle other errors
+        disconnectWallet()
+      }
       throw error
     }
   }
