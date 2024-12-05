@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Menu, X, Home, LayoutDashboard, Coins, Binary, Bot, BarChart, BarChart2, MessageCircle, Network, ImageIcon, FishIcon as Whale, FuelIcon as GasPump } from 'lucide-react'
+import { Menu, X, Home, LayoutDashboard, Coins, Binary, Bot, ArrowLeftRight, BarChart2, MessageCircle, Network, ImageIcon, FishIcon as Whale, FuelIcon as GasPump } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
@@ -13,7 +13,7 @@ const allSidebarItems = [
   { name: 'BE Staking', href: '/be-staking', icon: Coins },
   { name: 'CW²', href: '/cw2', icon: Binary },
   { name: 'BlockE AI', href: '/blocke-ai', icon: Bot },
-  { name: 'Cex and Dex', href: '/cex-and-dex', icon: BarChart },
+  { name: 'Cex and Dex', href: '/cex-and-dex', icon: ArrowLeftRight },
   { name: 'Predictive Analytics', href: '/predictive-analytics', icon: BarChart2, ceoOnly: true },
   { name: 'Social Media Sentiment Analysis', href: '/sentiment-analysis', icon: MessageCircle, ceoOnly: true },
   { name: 'Wallet Clustering', href: '/wallet-clustering', icon: Network, ceoOnly: true },
