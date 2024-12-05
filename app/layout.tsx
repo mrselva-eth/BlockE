@@ -1,8 +1,22 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import { Inter, Poppins } from 'next/font/google'
 import { WalletProvider } from '@/contexts/WalletContext'
 import NavbarContent from '@/components/NavbarContent'
 import WalletComponentsWrapper from '@/components/WalletComponentsWrapper'
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
+
+const poppins = Poppins({
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-poppins',
+})
 
 export const metadata: Metadata = {
   title: 'BlockE',
@@ -15,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>

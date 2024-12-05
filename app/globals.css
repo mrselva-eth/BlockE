@@ -249,3 +249,124 @@
   display: none;
 }
 
+/* BlockE UID Button */
+.Btn-Container {
+  display: flex;
+  width: 170px;
+  height: 36px; /* Match Mint BE button height */
+  background: linear-gradient(90deg, #4F46E5, #9333EA); /* BlockE brand colors */
+  border-radius: 99rem; /* Match Mint BE button radius */
+  box-shadow: 0px 5px 10px rgba(79, 70, 229, 0.2);
+  justify-content: space-between;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
+  font-weight: 700;
+}
+
+.icon-Container {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  margin: 2px;
+}
+
+.text {
+  width: calc(170px - 36px);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
+}
+
+.icon-Container svg {
+  transition-duration: 1.5s;
+}
+
+.Btn-Container:hover {
+  background: linear-gradient(90deg, #9333EA, #4F46E5);
+}
+
+.Btn-Container:hover .icon-Container svg {
+  transition-duration: 1.5s;
+  animation: arrow 1s linear infinite;
+}
+
+@keyframes arrow {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(5px);
+  }
+}
+
+/* Transaction Rejected Message styles */
+.transaction-rejected-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.transaction-rejected-content {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  max-width: 24rem;
+  width: 100%;
+  margin: 0 1rem;
+  text-align: center;
+  position: relative;
+}
+
+.transaction-rejected-close {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.transaction-rejected-close:hover {
+  color: #374151;
+}
+
+.transaction-rejected-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #dc2626;
+}
+
+.transaction-rejected-message {
+  margin-bottom: 1.5rem;
+}
+
+.transaction-rejected-button {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.transaction-rejected-button:hover {
+  background-color: #2563eb;
+}
+

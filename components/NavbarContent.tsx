@@ -6,9 +6,9 @@ import { useWallet } from '@/contexts/WalletContext'
 import { User, LogOut } from 'lucide-react'
 import userIcon from '/public/user.png'
 import MintModal from './MintModal'
-// import NetworkSwitchModal from './NetworkSwitchModal' //Removed as per update 3
 import { ethers } from 'ethers'
 import { BE_TOKEN_ADDRESS, BE_TOKEN_ABI } from '@/utils/beTokenABI'
+import TransactionRejectedMessage from './TransactionRejectedMessage'
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
 
@@ -24,7 +24,7 @@ export default function NavbarContent() {
   const [mintSuccess, setMintSuccess] = useState(false)
   const [needsPayment, setNeedsPayment] = useState(false)
   const [targetNetwork, setTargetNetwork] = useState<string | null>(null)
-  // const [showNetworkModal, setShowNetworkModal] = useState(false); //Removed as per update 4
+  const [showTransactionRejected, setShowTransactionRejected] = useState(false)
 
   const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
@@ -43,15 +43,27 @@ export default function NavbarContent() {
       
       if (chainId !== POLYGON_CHAIN_ID) {
         setTargetNetwork('Polygon')
-        // setShowNetworkModal(true) //Removed as per update 3
         return
       }
 
       setIsMinting(true)
 
+      if (!window.ethereum) {
+        throw new Error("No Ethereum provider found. Please install MetaMask or another wallet.")
+      }
+
       const provider = new ethers.BrowserProvider(window.ethereum)
       const signer = await provider.getSigner()
+      
+      if (!signer) {
+        throw new Error("Failed to get signer. Please check your wallet connection.")
+      }
+
       const beTokenContract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, signer)
+
+      if (!address) {
+        throw new Error("Wallet address not found.")
+      }
 
       const hasClaimedFree = await beTokenContract.hasClaimedFree(address)
       setNeedsPayment(hasClaimedFree)
@@ -66,15 +78,15 @@ export default function NavbarContent() {
 
       await tx.wait()
       setMintSuccess(true)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Minting failed:', error)
-      if (typeof error === 'object' && error !== null && 'code' in error) {
-        if (error.code === 4001) {
-          // User rejected the transaction
-          alert('Transaction was rejected. Please try again.')
-        } else {
-          alert('An error occurred while minting. Please try again.')
-        }
+      
+      if (error.code === 4001 || (error.info && error.info.error && error.info.error.code === 4001)) {
+        setShowTransactionRejected(true)
+      } else if (error.code === -32002) {
+        alert('Please check your wallet - you have a pending request.')
+      } else if (error.message && typeof error.message === 'string') {
+        alert(error.message)
       } else {
         alert('An unexpected error occurred. Please try again.')
       }
@@ -158,8 +170,13 @@ export default function NavbarContent() {
           >
             <span>Mint BE</span>
           </button>
-          <button className="blocke-user-id-btn">
-            <span>BlockE UID</span>
+          <button className="Btn-Container">
+            <span className="text">BlockE UID</span>
+            <div className="icon-Container">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 8h14M8 1l7 7-7 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
           </button>
           <div className="relative" ref={dropdownRef}>
             <button
@@ -210,7 +227,9 @@ export default function NavbarContent() {
           onSwitch={handleNetworkSwitch}
           targetNetwork={targetNetwork || undefined}
         />
-        {/* <NetworkSwitchModal isOpen={showNetworkModal} onClose={() => setShowNetworkModal(false)} /> */} {/*Removed as per update 3*/}
+        {showTransactionRejected && (
+          <TransactionRejectedMessage onClose={() => setShowTransactionRejected(false)} />
+        )}
       </>
     </div>
   )
