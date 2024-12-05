@@ -15,10 +15,14 @@ export default function WalletComponentsWrapper() {
     setShowDisconnectAlert(false)
   }, [disconnectWallet])
 
+  const resetInactivityTimer = useCallback(() => {
+    setShowDisconnectAlert(false)
+  }, [])
+
   useEffect(() => {
     let inactivityTimer: NodeJS.Timeout
 
-    const resetInactivityTimer = () => {
+    const startInactivityTimer = () => {
       if (inactivityTimer) clearTimeout(inactivityTimer)
       if (isConnected) {
         inactivityTimer = setTimeout(() => {
@@ -27,20 +31,14 @@ export default function WalletComponentsWrapper() {
       }
     }
 
-    const handleActivity = () => {
+    if (isConnected) {
+      startInactivityTimer()
+    } else {
       setShowDisconnectAlert(false)
-      resetInactivityTimer()
     }
-
-    window.addEventListener('mousemove', handleActivity)
-    window.addEventListener('keydown', handleActivity)
-
-    resetInactivityTimer()
 
     return () => {
       if (inactivityTimer) clearTimeout(inactivityTimer)
-      window.removeEventListener('mousemove', handleActivity)
-      window.removeEventListener('keydown', handleActivity)
     }
   }, [isConnected])
 
@@ -49,9 +47,11 @@ export default function WalletComponentsWrapper() {
       <NetworkWarningModal />
       <AnimationWrapper />
       {showDisconnectAlert && (
-        <AutoDisconnectAlert onCountdownComplete={handleDisconnect} />
+        <AutoDisconnectAlert 
+          onDisconnect={handleDisconnect} 
+          onResetTimer={resetInactivityTimer}
+        />
       )}
     </>
   )
 }
-

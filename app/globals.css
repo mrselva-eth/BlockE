@@ -21,13 +21,30 @@
   }
 }
 
+@keyframes rotateCircle {
+  0% { transform: rotate(180deg); }
+  33% { transform: rotate(0deg); }
+  66% { transform: rotate(90deg); }
+  100% { transform: rotate(180deg); }
+}
+
+@keyframes scale-bounce {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 /* Wallet Connect Button */
 .wallet-connect-btn {
   background-color: #444141;
-  border-radius: 50px; /* Changed to create oval shape */
+  border-radius: 50px;
   color: #fff;
   cursor: pointer;
-  padding: 12px 32px; /* Adjusted padding for oval shape */
+  padding: 12px 32px;
   font-size: 16px;
   font-weight: bold;
   letter-spacing: 1px;
@@ -80,10 +97,22 @@
 
 .blocke-user-id-container:hover::before {
   background: linear-gradient(90deg, #03a9f4, #f441a5);
-  filter: blur(0.4em); /* Reduced blur effect */
+  filter: blur(0.4em);
 }
 
 .blocke-user-id-container:active::before {
   filter: blur(0.1em);
+}
+
+.animate-scale-bounce {
+  animation: scale-bounce 1s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
 }
 

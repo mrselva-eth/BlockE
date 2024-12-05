@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useState, useContext, useEffect, useRef } from 'react'
+import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react'
 import { ethers } from 'ethers'
 import Web3Modal from 'web3modal'
 import CoinbaseWalletSDK from '@coinbase/wallet-sdk'
@@ -59,7 +59,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [])
 
-  const verifyCaptcha = async (token: string): Promise<boolean> => {
+  const verifyCaptcha = useCallback(async (token: string): Promise<boolean> => {
     try {
       const response = await fetch('/api/verify-captcha', {
         method: 'POST',
@@ -79,9 +79,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.error('CAPTCHA verification failed:', error)
       return false
     }
-  }
+  }, [])
 
-  const checkNetwork = async (provider: any) => {
+  const checkNetwork = useCallback(async (provider: any) => {
     if (provider.request) {
       const chainId = await provider.request({ method: 'eth_chainId' })
       const isCorrect = chainId === ETH_MAINNET_CHAIN_ID
@@ -89,9 +89,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return isCorrect
     }
     return false
-  }
+  }, [])
 
-  const switchNetwork = async () => {
+  const switchNetwork = useCallback(async () => {
     if (typeof window !== 'undefined' && window.ethereum) {
       try {
         await window.ethereum.request({
@@ -107,9 +107,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
     }
-  }
+  }, [])
 
-  const connectWallet = async (providerType: string) => {
+  const connectWallet = useCallback(async (providerType: string) => {
     try {
       if (!web3ModalRef.current) {
         throw new Error("Web3Modal not initialized.")
@@ -160,18 +160,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch (error: any) {
       console.error("Failed to connect:", error)
       if (error.message.includes("User rejected the request")) {
-        // Handle user rejection gracefully
         console.log("User rejected the wallet connection request")
-        // You might want to show a user-friendly message here
       } else {
-        // Handle other errors
         disconnectWallet()
       }
       throw error
     }
-  }
+  }, [checkNetwork])
 
-  const disconnectWallet = () => {
+  const disconnectWallet = useCallback(() => {
     if (web3ModalRef.current) {
       web3ModalRef.current.clearCachedProvider()
     }
@@ -185,39 +182,39 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       window.ethereum.removeListener('accountsChanged', handleAccountsChanged)
       window.ethereum.removeListener('chainChanged', handleChainChanged)
     }
-  }
+  }, [])
 
-  const handleAccountsChanged = (accounts: string[]) => {
+  const handleAccountsChanged = useCallback((accounts: string[]) => {
     if (accounts.length === 0) {
       disconnectWallet()
     } else if (accounts[0] !== address) {
       setAddress(accounts[0])
     }
-  }
+  }, [address, disconnectWallet])
 
-  const handleChainChanged = async () => {
+  const handleChainChanged = useCallback(async () => {
     if (window.ethereum) {
       await checkNetwork(window.ethereum)
     }
+  }, [checkNetwork])
+
+  const contextValue = {
+    signer,
+    address,
+    isConnected,
+    showWalletModal,
+    setShowWalletModal,
+    connectWallet,
+    disconnectWallet,
+    verifyCaptcha,
+    isCorrectNetwork,
+    switchNetwork,
+    showSuccessAnimation,
+    setShowSuccessAnimation
   }
 
   return (
-    <WalletContext.Provider 
-      value={{ 
-        signer, 
-        address, 
-        isConnected, 
-        showWalletModal,
-        setShowWalletModal,
-        connectWallet, 
-        disconnectWallet,
-        verifyCaptcha,
-        isCorrectNetwork,
-        switchNetwork,
-        showSuccessAnimation,
-        setShowSuccessAnimation
-      }}
-    >
+    <WalletContext.Provider value={contextValue}>
       {children}
     </WalletContext.Provider>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
 import ReCAPTCHA from 'react-google-recaptcha'
 import { useWallet } from '@/contexts/WalletContext'
@@ -41,6 +41,16 @@ export default function WalletModal() {
   const [captchaVerified, setCaptchaVerified] = useState(false)
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 
+  useEffect(() => {
+    if (showWalletModal) {
+      setCaptchaVerified(false)
+      setError(null)
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset()
+      }
+    }
+  }, [showWalletModal])
+
   const handleCaptchaChange = async (token: string | null) => {
     setError(null)
     
@@ -70,7 +80,11 @@ export default function WalletModal() {
       await connectWallet(walletId)
     } catch (error: any) {
       console.error('Failed to connect wallet:', error)
-      setError(error.message || 'Failed to connect wallet. Please try again.')
+      if (error.message.includes('User rejected the request')) {
+        setError('Connection cancelled by user. Please try again.')
+      } else {
+        setError(error.message || 'Failed to connect wallet. Please try again.')
+      }
     }
   }
 
@@ -90,9 +104,17 @@ export default function WalletModal() {
         </div>
         
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg flex items-center">
-            <AlertTriangle size={18} className="mr-2" />
-            {error}
+          <div className="mb-4 p-4 bg-red-50 border border-red-100 rounded-lg">
+            <div className="flex items-center mb-2">
+              <AlertTriangle size={18} className="text-red-500 mr-2" />
+              <p className="text-red-700 font-medium">{error}</p>
+            </div>
+            <button 
+              onClick={() => setError(null)}
+              className="mt-2 text-sm text-red-600 hover:text-red-700 underline"
+            >
+              Try again
+            </button>
           </div>
         )}
 

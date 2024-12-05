@@ -1,21 +1,27 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { AlertCircle } from 'lucide-react'
 
 interface AutoDisconnectAlertProps {
-  onCountdownComplete: () => void
+  onDisconnect: () => void
+  onResetTimer: () => void
 }
 
-const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onCountdownComplete }) => {
+const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onDisconnect, onResetTimer }) => {
   const [countdown, setCountdown] = useState(5)
+
+  const handleDisconnect = useCallback(() => {
+    if (countdown === 0) {
+      onDisconnect()
+    }
+  }, [countdown, onDisconnect])
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prevCount) => {
         if (prevCount <= 1) {
           clearInterval(timer)
-          onCountdownComplete()
           return 0
         }
         return prevCount - 1
@@ -23,13 +29,27 @@ const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onCountdownCo
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [onCountdownComplete])
+  }, [])
 
-  //useEffect(() => {
-  //  if (countdown === 0) {
-  //    onDisconnect()
-  //  }
-  //}, [countdown, onDisconnect])
+  useEffect(() => {
+    handleDisconnect()
+  }, [handleDisconnect])
+
+  useEffect(() => {
+    const handleActivity = () => {
+      if (countdown > 0) {
+        onResetTimer()
+      }
+    }
+
+    window.addEventListener('mousemove', handleActivity)
+    window.addEventListener('keydown', handleActivity)
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity)
+      window.removeEventListener('keydown', handleActivity)
+    }
+  }, [countdown, onResetTimer])
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -57,7 +77,10 @@ const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onCountdownCo
               fill="transparent"
               strokeDasharray={283}
               strokeDashoffset={283 * countdown / 5}
-              style={{ transform: 'rotate(90deg)', transformOrigin: '50% 50%' }}
+              style={{ 
+                animation: 'rotateCircle 2s linear infinite',
+                transformOrigin: '50% 50%'
+              }}
             ></circle>
           </svg>
           <span className="absolute inset-0 flex items-center justify-center text-3xl font-bold">
@@ -71,4 +94,3 @@ const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onCountdownCo
 }
 
 export default AutoDisconnectAlert
-
