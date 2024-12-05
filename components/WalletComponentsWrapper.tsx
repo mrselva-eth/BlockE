@@ -27,7 +27,7 @@ export default function WalletComponentsWrapper() {
       if (isConnected) {
         inactivityTimer = setTimeout(() => {
           setShowDisconnectAlert(true)
-        }, 55000) // 55 seconds of inactivity
+        }, 295000) // 4 minutes and 55 seconds of inactivity
       }
     }
 
@@ -55,3 +55,4 @@ export default function WalletComponentsWrapper() {
     </>
   )
 }
+

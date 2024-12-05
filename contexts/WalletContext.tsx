@@ -51,6 +51,13 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       })
     }
 
+    // Check for saved connection on initial load
+    const savedConnection = localStorage.getItem('walletConnection')
+    if (savedConnection) {
+      const { providerType } = JSON.parse(savedConnection)
+      connectWallet(providerType, true)
+    }
+
     return () => {
       if (typeof window !== 'undefined' && window.ethereum) {
         window.ethereum.removeAllListeners('accountsChanged')
@@ -109,7 +116,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [])
 
-  const connectWallet = useCallback(async (providerType: string) => {
+  const connectWallet = useCallback(async (providerType: string, isAutoConnect: boolean = false) => {
     try {
       if (!web3ModalRef.current) {
         throw new Error("Web3Modal not initialized.")
@@ -148,7 +155,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setAddress(address)
       setIsConnected(true)
       setShowWalletModal(false)
-      setShowSuccessAnimation(true)
+      if (!isAutoConnect) {
+        setShowSuccessAnimation(true)
+      }
       
       if (provider.on) {
         provider.on('accountsChanged', handleAccountsChanged)
@@ -157,6 +166,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Check network after successful connection
       await checkNetwork(provider)
+
+      // Save connection info to local storage
+      localStorage.setItem('walletConnection', JSON.stringify({ providerType, address }))
+
     } catch (error: any) {
       console.error("Failed to connect:", error)
       if (error.message.includes("User rejected the request")) {
@@ -178,6 +191,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsCorrectNetwork(false)
     setShowSuccessAnimation(false)
     
+    // Clear saved connection from local storage
+    localStorage.removeItem('walletConnection')
+    
     if (typeof window !== 'undefined' && window.ethereum) {
       window.ethereum.removeListener('accountsChanged', handleAccountsChanged)
       window.ethereum.removeListener('chainChanged', handleChainChanged)
@@ -189,6 +205,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       disconnectWallet()
     } else if (accounts[0] !== address) {
       setAddress(accounts[0])
+      // Update saved connection in local storage
+      const savedConnection = localStorage.getItem('walletConnection')
+      if (savedConnection) {
+        const { providerType } = JSON.parse(savedConnection)
+        localStorage.setItem('walletConnection', JSON.stringify({ providerType, address: accounts[0] }))
+      }
     }
   }, [address, disconnectWallet])
 

@@ -5,10 +5,14 @@ import Image from 'next/image'
 import { useWallet } from '@/contexts/WalletContext'
 import { User, LogOut } from 'lucide-react'
 
+const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
+
 export default function NavbarContent() {
   const { isConnected, address, disconnectWallet, isCorrectNetwork, switchNetwork } = useWallet()
   const [showDropdown, setShowDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
   const handleLogout = () => {
     disconnectWallet()
@@ -45,7 +49,19 @@ export default function NavbarContent() {
             priority
           />
         </div>
-        <h1 className="ml-2 text-xl sm:text-2xl font-bold text-gray-800">BlockE</h1>
+        <h1 className="ml-2 mr-4 text-xl sm:text-2xl font-bold text-gray-800">BlockE</h1>
+        {isCEO && (
+          <div className="flex items-center ml-0 bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 text-white px-2 py-1 rounded-full shadow-sm">
+            <Image
+              src="/ceo.png"
+              alt="CEO"
+              width={20}
+              height={20}
+              className="rounded-full mr-1"
+            />
+            <span className="text-xs font-semibold">CEO</span>
+          </div>
+        )}
       </div>
       {isConnected && (
         <div className="flex items-center gap-6">

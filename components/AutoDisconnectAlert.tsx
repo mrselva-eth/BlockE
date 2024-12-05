@@ -9,7 +9,7 @@ interface AutoDisconnectAlertProps {
 }
 
 const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onDisconnect, onResetTimer }) => {
-  const [countdown, setCountdown] = useState(5)
+  const [countdown, setCountdown] = useState(60)
 
   const handleDisconnect = useCallback(() => {
     if (countdown === 0) {
@@ -76,7 +76,7 @@ const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onDisconnect,
               r="45"
               fill="transparent"
               strokeDasharray={283}
-              strokeDashoffset={283 * countdown / 5}
+              strokeDashoffset={283 * countdown / 60}
               style={{ 
                 animation: 'rotateCircle 2s linear infinite',
                 transformOrigin: '50% 50%'
@@ -94,3 +94,4 @@ const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onDisconnect,
 }
 
 export default AutoDisconnectAlert
+

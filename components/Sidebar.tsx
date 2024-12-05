@@ -2,25 +2,34 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Menu, X, Home } from 'lucide-react'
+import { Menu, X, Home, LayoutDashboard, Coins, Binary, Bot, BarChart, BarChart2, MessageCircle, Network, ImageIcon, FishIcon as Whale, FuelIcon as GasPump } from 'lucide-react'
+import { useWallet } from '@/contexts/WalletContext'
 
-const sidebarItems = [
+const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
+
+const allSidebarItems = [
   { name: 'Home', href: '/', icon: Home },
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'CW²', href: '/cw2' },
-  { name: 'BlockE AI', href: '/blocke-ai' },
-  { name: 'Cex and Dex', href: '/cex-and-dex' },
-  { name: 'Predictive Analytics', href: '/predictive-analytics' },
-  { name: 'Social Media Sentiment Analysis', href: '/sentiment-analysis' },
-  { name: 'Wallet Clustering', href: '/wallet-clustering' },
-  { name: 'NFT Analytics', href: '/nft-analytics' },
-  { name: 'Whale Alert', href: '/whale-alert' },
-  { name: 'Gas Price Forecasting', href: '/gas-price-forecasting' },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'BE Staking', href: '/be-staking', icon: Coins },
+  { name: 'CW²', href: '/cw2', icon: Binary },
+  { name: 'BlockE AI', href: '/blocke-ai', icon: Bot },
+  { name: 'Cex and Dex', href: '/cex-and-dex', icon: BarChart },
+  { name: 'Predictive Analytics', href: '/predictive-analytics', icon: BarChart2, ceoOnly: true },
+  { name: 'Social Media Sentiment Analysis', href: '/sentiment-analysis', icon: MessageCircle, ceoOnly: true },
+  { name: 'Wallet Clustering', href: '/wallet-clustering', icon: Network, ceoOnly: true },
+  { name: 'NFT Analytics', href: '/nft-analytics', icon: ImageIcon, ceoOnly: true },
+  { name: 'Whale Alert', href: '/whale-alert', icon: Whale, ceoOnly: true },
+  { name: 'Gas Price Forecasting', href: '/gas-price-forecasting', icon: GasPump, ceoOnly: true },
 ]
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const { address } = useWallet()
+
+  const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
+
+  const sidebarItems = allSidebarItems.filter(item => !item.ceoOnly || isCEO)
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
