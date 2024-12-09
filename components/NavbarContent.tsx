@@ -6,25 +6,32 @@ import { useWallet } from '@/contexts/WalletContext'
 import { User, LogOut } from 'lucide-react'
 import userIcon from '/public/user.png'
 import MintModal from './MintModal'
+import MintAlertModal from './MintAlertModal'
 import { ethers } from 'ethers'
 import { BE_TOKEN_ADDRESS, BE_TOKEN_ABI } from '@/utils/beTokenABI'
 import TransactionRejectedMessage from './TransactionRejectedMessage'
+import { usePathname } from 'next/navigation'
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
 
 const POLYGON_CHAIN_ID = '0x89'
 const ETH_CHAIN_ID = '0x1'
+const POLYGON_RPC_URL = 'https://polygon-rpc.com'
 
 export default function NavbarContent() {
   const { isConnected, address, disconnectWallet, isCorrectNetwork, switchNetwork } = useWallet()
   const [showDropdown, setShowDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [showMintModal, setShowMintModal] = useState(false)
+  const [showMintAlertModal, setShowMintAlertModal] = useState(false)
   const [isMinting, setIsMinting] = useState(false)
   const [mintSuccess, setMintSuccess] = useState(false)
   const [needsPayment, setNeedsPayment] = useState(false)
   const [targetNetwork, setTargetNetwork] = useState<string | null>(null)
   const [showTransactionRejected, setShowTransactionRejected] = useState(false)
+  const [tokenBalance, setTokenBalance] = useState<string>('0')
+  const pathname = usePathname()
+  const [currentNetwork, setCurrentNetwork] = useState<'Ethereum' | 'Polygon' | null>(null)
 
   const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
@@ -35,6 +42,14 @@ export default function NavbarContent() {
 
   const truncateAddress = (addr: string) => {
     return `${addr.slice(0, 5)}...${addr.slice(-3)}`
+  }
+
+  const handleMintClick = () => {
+    if (pathname === '/dashboard') {
+      setShowMintAlertModal(true)
+    } else {
+      setShowMintModal(true)
+    }
   }
 
   const handleMint = async () => {
@@ -79,8 +94,6 @@ export default function NavbarContent() {
       await tx.wait()
       setMintSuccess(true)
     } catch (error: any) {
-      console.error('Minting failed:', error)
-      
       if (error.code === 4001 || (error.info && error.info.error && error.info.error.code === 4001)) {
         setShowTransactionRejected(true)
       } else if (error.code === -32002) {
@@ -117,6 +130,50 @@ export default function NavbarContent() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  useEffect(() => {
+    const fetchTokenBalance = async () => {
+      if (isConnected && address) {
+        try {
+          const polygonProvider = new ethers.JsonRpcProvider(POLYGON_RPC_URL)
+          const contract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, polygonProvider)
+          const balance = await contract.balanceOf(address)
+          setTokenBalance(ethers.formatUnits(balance, 18))
+        } catch (error) {
+          console.error('Error fetching token balance:', error)
+          setTokenBalance('0')
+        }
+      }
+    }
+
+    fetchTokenBalance()
+  }, [isConnected, address])
+
+  useEffect(() => {
+    const checkNetwork = async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        const provider = new ethers.BrowserProvider(window.ethereum)
+        const network = await provider.getNetwork()
+        const chainId = '0x' + network.chainId.toString(16)
+
+        if (chainId === ETH_CHAIN_ID) {
+          setCurrentNetwork('Ethereum')
+        } else if (chainId === POLYGON_CHAIN_ID) {
+          setCurrentNetwork('Polygon')
+        } else {
+          setCurrentNetwork(null)
+        }
+      }
+    }
+
+    checkNetwork()
+    if (window.ethereum) {
+      window.ethereum.on('chainChanged', checkNetwork)
+      return () => {
+        window.ethereum.removeListener('chainChanged', checkNetwork)
+      }
     }
   }, [])
 
@@ -164,8 +221,23 @@ export default function NavbarContent() {
       </div>
       {isConnected && (
         <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 group relative">
+            <Image
+              src="/blocke-logo.png"
+              alt="BE Token"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+            <span className="text-sm font-bold text-gray-800" style={{ fontFamily: 'var(--font-poppins)' }}>
+              BE Token: {parseFloat(tokenBalance).toFixed(2)}
+            </span>
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-1 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+              Your BE Token Balance (on Polygon)
+            </div>
+          </div>
           <button 
-            onClick={() => setShowMintModal(true)}
+            onClick={handleMintClick}
             className="btn-23"
           >
             <span>Mint BE</span>
@@ -196,8 +268,14 @@ export default function NavbarContent() {
                 </div>
                 <div className="px-4 py-2 text-sm text-gray-700 border-t border-gray-100">
                   <div className="flex items-center">
-                    <Image src="/ethereum.png" alt="Ethereum logo" width={16} height={16} className="mr-2" />
-                    <p>Network: Ethereum Mainnet</p>
+                    <Image 
+                      src={currentNetwork === 'Ethereum' ? "/ethereum.png" : "/polygon.png"} 
+                      alt={`${currentNetwork} logo`} 
+                      width={16} 
+                      height={16} 
+                      className="mr-2" 
+                    />
+                    <p>Network: {currentNetwork || 'Unknown'}</p>
                   </div>
                 </div>
                 <button
@@ -226,6 +304,10 @@ export default function NavbarContent() {
           needsPayment={needsPayment}
           onSwitch={handleNetworkSwitch}
           targetNetwork={targetNetwork || undefined}
+        />
+        <MintAlertModal
+          isOpen={showMintAlertModal}
+          onClose={() => setShowMintAlertModal(false)}
         />
         {showTransactionRejected && (
           <TransactionRejectedMessage onClose={() => setShowTransactionRejected(false)} />

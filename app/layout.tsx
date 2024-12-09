@@ -4,6 +4,7 @@ import { Inter, Poppins } from 'next/font/google'
 import { WalletProvider } from '@/contexts/WalletContext'
 import NavbarContent from '@/components/NavbarContent'
 import WalletComponentsWrapper from '@/components/WalletComponentsWrapper'
+import NetworkSwitchAlert from '@/components/NetworkSwitchAlert'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -21,6 +22,15 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'BlockE',
   description: 'Web 3.0 Analytics Platform',
+  icons: {
+    icon: [
+      {
+        url: '/blocke-logo.png',
+        href: '/blocke-logo.png',
+      },
+    ],
+    apple: '/blocke-logo.png',
+  },
 }
 
 export default function RootLayout({
@@ -42,6 +52,7 @@ export default function RootLayout({
           <main className="pt-16">
             {children}
           </main>
+          <NetworkSwitchAlert />
         </WalletProvider>
       </body>
     </html>

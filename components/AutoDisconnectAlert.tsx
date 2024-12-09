@@ -6,30 +6,40 @@ import { AlertCircle } from 'lucide-react'
 interface AutoDisconnectAlertProps {
   onDisconnect: () => void
   onResetTimer: () => void
+  onToggleAutoDisconnect: (isEnabled: boolean) => void
+  isAutoDisconnectEnabled: boolean
 }
 
-const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onDisconnect, onResetTimer }) => {
-  const [countdown, setCountdown] = useState(60)
+const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({
+  onDisconnect,
+  onResetTimer,
+  onToggleAutoDisconnect,
+  isAutoDisconnectEnabled
+}) => {
+  const [countdown, setCountdown] = useState(5)
 
   const handleDisconnect = useCallback(() => {
-    if (countdown === 0) {
+    if (countdown === 0 && isAutoDisconnectEnabled) {
       onDisconnect()
     }
-  }, [countdown, onDisconnect])
+  }, [countdown, onDisconnect, isAutoDisconnectEnabled])
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prevCount) => {
-        if (prevCount <= 1) {
-          clearInterval(timer)
-          return 0
-        }
-        return prevCount - 1
-      })
-    }, 1000)
+    let timer: NodeJS.Timeout
+    if (isAutoDisconnectEnabled) {
+      timer = setInterval(() => {
+        setCountdown((prevCount) => {
+          if (prevCount <= 1) {
+            clearInterval(timer)
+            return 0
+          }
+          return prevCount - 1
+        })
+      }, 1000)
+    }
 
     return () => clearInterval(timer)
-  }, [])
+  }, [isAutoDisconnectEnabled])
 
   useEffect(() => {
     handleDisconnect()
@@ -37,7 +47,7 @@ const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onDisconnect,
 
   useEffect(() => {
     const handleActivity = () => {
-      if (countdown > 0) {
+      if (countdown > 0 && isAutoDisconnectEnabled) {
         onResetTimer()
       }
     }
@@ -49,45 +59,57 @@ const AutoDisconnectAlert: React.FC<AutoDisconnectAlertProps> = ({ onDisconnect,
       window.removeEventListener('mousemove', handleActivity)
       window.removeEventListener('keydown', handleActivity)
     }
-  }, [countdown, onResetTimer])
+  }, [countdown, onResetTimer, isAutoDisconnectEnabled])
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 text-center">
-        <AlertCircle className="mx-auto mb-4 text-yellow-500" size={48} />
-        <h2 className="text-2xl font-bold mb-4">Auto-disconnect Warning</h2>
-        <p className="mb-6">You will be disconnected due to inactivity in:</p>
-        <div className="relative w-24 h-24 mx-auto mb-4">
+      <div className="bg-white rounded-lg p-4 max-w-sm w-full mx-4 text-center relative">
+        <AlertCircle className="mx-auto mb-3 text-yellow-500" size={36} />
+        <h2 className="text-xl font-bold mb-3">Auto-disconnect Warning</h2>
+        <p className="mb-4">You will be disconnected due to inactivity in:</p>
+        <div className="relative w-32 h-32 mx-auto mb-4">
           <svg className="w-full h-full" viewBox="0 0 100 100">
             <circle
               className="text-gray-200 stroke-current"
-              strokeWidth="8"
+              strokeWidth="4"
               cx="50"
               cy="50"
-              r="45"
+              r="48"
               fill="transparent"
             ></circle>
             <circle
               className="text-blue-600 stroke-current"
-              strokeWidth="8"
+              strokeWidth="4"
               strokeLinecap="round"
               cx="50"
               cy="50"
-              r="45"
+              r="48"
               fill="transparent"
-              strokeDasharray={283}
-              strokeDashoffset={283 * countdown / 60}
-              style={{ 
-                animation: 'rotateCircle 2s linear infinite',
-                transformOrigin: '50% 50%'
+              strokeDasharray={302}
+              strokeDashoffset={302 * ((5 - countdown) / 5)}
+              style={{
+                transformOrigin: 'center',
+                transform: 'rotate(-90deg)',
               }}
             ></circle>
           </svg>
-          <span className="absolute inset-0 flex items-center justify-center text-3xl font-bold">
+          <span className="absolute inset-0 flex items-center justify-center text-4xl font-bold">
             {countdown}
           </span>
         </div>
-        <p>Move your cursor or press any key to stay connected.</p>
+        <p className="text-sm">Move your cursor or press any key to stay connected.</p>
+        <div className="absolute bottom-4 left-4 flex items-center">
+          <input
+            type="checkbox"
+            id="disableAutoDisconnect"
+            checked={!isAutoDisconnectEnabled}
+            onChange={(e) => onToggleAutoDisconnect(!e.target.checked)}
+            className="mr-2"
+          />
+          <label htmlFor="disableAutoDisconnect" className="text-sm text-gray-600">
+            Disable auto-disconnect
+          </label>
+        </div>
       </div>
     </div>
   )
