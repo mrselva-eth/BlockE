@@ -716,3 +716,11 @@
   }
 }
 
+body, html {
+  min-height: 100vh;
+}
+
+#__next {
+  min-height: 100vh;
+}
+

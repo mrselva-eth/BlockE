@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
+import { useRouter } from 'next/navigation'
 import AnimationWrapper from './AnimationWrapper'
 import AutoDisconnectAlert from './AutoDisconnectAlert'
 import AutoDisconnectToggle from './AutoDisconnectToggle'
 
 export default function WalletComponentsWrapper() {
   const { disconnectWallet, isConnected } = useWallet()
+  const router = useRouter()
   const [showDisconnectAlert, setShowDisconnectAlert] = useState(false)
   const [lastActiveTime, setLastActiveTime] = useState(Date.now())
   const [isAutoDisconnectEnabled, setIsAutoDisconnectEnabled] = useState(true)
@@ -15,7 +17,8 @@ export default function WalletComponentsWrapper() {
   const handleDisconnect = useCallback(() => {
     disconnectWallet()
     setShowDisconnectAlert(false)
-  }, [disconnectWallet])
+    router.push('/')
+  }, [disconnectWallet, router])
 
   const resetInactivityTimer = useCallback(() => {
     setLastActiveTime(Date.now())

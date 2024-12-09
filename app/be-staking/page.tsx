@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
 import Image from 'next/image'
 import { useWallet } from '@/contexts/WalletContext'
@@ -13,11 +13,12 @@ import Sidebar from '@/components/Sidebar'
 import SocialMediaLinks from '@/components/SocialMediaLinks'
 
 const stakingPeriods = [
-  { days: 15, apr: 20 },
-  { days: 30, apr: 30 },
-  { days: 45, apr: 40 },
-  { days: 60, apr: 50 },
-  { days: 90, apr: 60 },
+  { days: 1/1440, apr: 1000 }, // 1 minute for testing (1000% APR)
+  { days: 15, apr: 227.8 },
+  { days: 30, apr: 250 },
+  { days: 45, apr: 275 },
+  { days: 60, apr: 300 },
+  { days: 90, apr: 350 },
 ]
 
 export default function BEStaking() {
@@ -29,6 +30,8 @@ export default function BEStaking() {
   const [totalStaked, setTotalStaked] = useState('0')
   const [showRejected, setShowRejected] = useState(false)
   const [isStaking, setIsStaking] = useState(false)
+  const [stakeError, setStakeError] = useState('')
+  const [transactionPending, setTransactionPending] = useState(false)
 
   useEffect(() => {
     if (isConnected && address) {
@@ -71,16 +74,31 @@ export default function BEStaking() {
     }
 
     const amount = parseFloat(stakeAmount)
-    const apr = selectedPeriod.apr
+    const apr = selectedPeriod.apr / 100
     const days = selectedPeriod.days
-    const earnings = (amount * apr * days) / (365 * 100)
-    setExpectedEarnings(earnings.toFixed(2))
+    
+    const earnings = (amount * apr * days) / 365
+    setExpectedEarnings(earnings.toFixed(3))
+  }
+
+  const handleStakeAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0)) {
+      setStakeAmount(value)
+      setStakeError('')
+    } else {
+      setStakeError('Please enter a valid positive number')
+    }
   }
 
   const handleStake = async () => {
-    if (!stakeAmount || !isConnected) return
+    if (!stakeAmount || !isConnected || parseFloat(stakeAmount) <= 0) {
+      setStakeError('Please enter a valid stake amount')
+      return
+    }
 
     setIsStaking(true)
+    setTransactionPending(true)
     try {
       const provider = new ethers.BrowserProvider(window.ethereum)
       const signer = await provider.getSigner()
@@ -106,16 +124,24 @@ export default function BEStaking() {
       console.error('Staking error:', error)
       if (error.code === 4001 || (error.info && error.info.error && error.info.error.code === 4001)) {
         setShowRejected(true)
+      } else {
+        alert(`Staking failed: ${error.message || 'Unknown error'}`)
       }
     } finally {
       setIsStaking(false)
+      setTransactionPending(false)
     }
   }
+
+  const handleStakeUpdate = useCallback(() => {
+    fetchBalance()
+    fetchTotalStaked()
+  }, [fetchBalance, fetchTotalStaked])
 
   const progressPercentage = Math.min((parseFloat(totalStaked) / 1000000) * 100, 100)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cover bg-center" style={{ backgroundImage: "url('/staking-background.png')" }}>
       {isConnected && <Sidebar />}
       <main className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto border border-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 bg-white shadow-xl">
@@ -160,12 +186,13 @@ export default function BEStaking() {
                 Stake BE Tokens
               </label>
               <input
-                type="number"
+                type="text"
                 value={stakeAmount}
-                onChange={(e) => setStakeAmount(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onChange={handleStakeAmountChange}
+                className={`w-full p-3 border ${stakeError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 placeholder="Enter amount to stake"
               />
+              {stakeError && <p className="mt-2 text-sm text-red-600">{stakeError}</p>}
             </div>
 
             {/* Lock Period Selection */}
@@ -184,7 +211,7 @@ export default function BEStaking() {
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    {period.days} days
+                    {period.days < 1 ? `${Math.round(period.days * 1440)} minute${period.days * 1440 > 1 ? 's' : ''}` : `${period.days} days`}
                   </button>
                 ))}
               </div>
@@ -194,7 +221,7 @@ export default function BEStaking() {
             <div className="mb-8">
               <div className="max-w-xs mx-auto bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-center text-white">
                 <div className="text-sm mb-1">Annual Percentage Rate</div>
-                <div className="text-4xl font-bold">{selectedPeriod.apr}%</div>
+                <div className="text-4xl font-bold">{selectedPeriod.apr.toFixed(2)}%</div>
                 <div className="text-sm mt-2">APR</div>
               </div>
             </div>
@@ -219,7 +246,7 @@ export default function BEStaking() {
             {/* Stake Button */}
             <button
               onClick={handleStake}
-              disabled={isStaking || !stakeAmount}
+              disabled={isStaking || !stakeAmount || parseFloat(stakeAmount) <= 0}
               className="button w-full"
             >
               <div className="points_wrapper">
@@ -235,7 +262,7 @@ export default function BEStaking() {
           </div>
 
           {/* Staking History */}
-          <StakingHistory />
+          <StakingHistory onStakeUpdate={handleStakeUpdate} transactionPending={transactionPending} />
 
           {/* Transaction Rejected Message */}
           {showRejected && (

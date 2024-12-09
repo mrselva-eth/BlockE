@@ -1,4 +1,4 @@
-export const BE_STAKING_ADDRESS = '0x211560313cF804c1EC8E7B66126793f354C0b9AB'
+export const BE_STAKING_ADDRESS = '0x9382d9D641E7B976f23f29ab87f4D086E595A5c8'
 
 export const BE_STAKING_ABI = [
   {
@@ -188,6 +188,11 @@ export const BE_STAKING_ABI = [
           {
             "internalType": "bool",
             "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "unstaked",
             "type": "bool"
           }
         ],
