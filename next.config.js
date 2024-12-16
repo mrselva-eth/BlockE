@@ -18,6 +18,11 @@ const nextConfig = {
     }
     return config
   },
+  env: {
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    MONGODB_URI: process.env.MONGODB_URI,
+    MONGODB_DB: process.env.MONGODB_DB,
+  },
 }
 
 module.exports = nextConfig
