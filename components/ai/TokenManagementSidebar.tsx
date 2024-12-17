@@ -23,7 +23,7 @@ export default function TokenManagementSidebar() {
   const [error, setError] = useState<string | null>(null)
   const [showTransactionRejected, setShowTransactionRejected] = useState(false)
   const { address } = useWallet()
-  const { balance, setBalance, deductToken, refreshBalance, error: balanceError } = useAIBalance() // Updated to use setBalance
+  const { balance, setBalance, deductToken, refreshBalance, error: balanceError } = useAIBalance()
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -50,6 +50,16 @@ export default function TokenManagementSidebar() {
     
     initDB()
   }, [])
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (address) {
+        refreshBalance()
+      }
+    }, 10000) // Refresh every 10 seconds
+
+    return () => clearInterval(intervalId)
+  }, [address, refreshBalance])
 
   const handleTransaction = async () => {
     if (!window.ethereum || !address) return
@@ -108,6 +118,7 @@ export default function TokenManagementSidebar() {
 
         const data = await response.json()
         setBalance(data.balance)
+        await refreshBalance()
       } else {
         // Withdraw
         setStatus('pending')
@@ -147,6 +158,7 @@ export default function TokenManagementSidebar() {
 
         const data = await response.json()
         setBalance(data.balance)
+        await refreshBalance()
       }
       
       setStatus('success')

@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const balance = await getAIBalance(address)
+    const balance = await getAIBalance(address.toLowerCase())
     return NextResponse.json({ balance })
   } catch (error) {
     console.error('Error fetching AI balance:', error)
@@ -26,9 +26,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const currentBalance = await getAIBalance(address)
+    const currentBalance = await getAIBalance(address.toLowerCase())
     const newBalance = currentBalance + amount
-    await updateAIBalance(address, newBalance)
+    await updateAIBalance(address.toLowerCase(), newBalance)
 
     return NextResponse.json({ newBalance })
   } catch (error) {

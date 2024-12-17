@@ -34,7 +34,7 @@ export default function Home() {
             className="mx-auto"
           />
         </div>
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-gray-800">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-gray-800 font-space-grotesk">
           Welcome to BlockE
         </h1>
         <p className="text-xl sm:text-2xl mb-8 text-gray-600">

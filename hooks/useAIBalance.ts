@@ -21,11 +21,13 @@ export function useAIBalance() {
         console.log(`Balance fetched from MongoDB: ${data.balance} BE`)
       } else {
         console.error('Failed to fetch balance from MongoDB')
+        throw new Error('Invalid balance data received')
       }
       setError(null)
     } catch (error) {
       console.error('Error fetching AI balance:', error)
       setError('Failed to fetch balance. Please try again later.')
+      setBalance(0) // Set balance to 0 when there's an error
     }
   }, [address, setBalance])
 
@@ -54,14 +56,17 @@ export function useAIBalance() {
     }
   }, [address, setBalance])
 
-  const refreshBalance = useCallback(() => {
-    fetchBalance()
+  const refreshBalance = useCallback(async () => {
+    await fetchBalance()
   }, [fetchBalance])
 
   useEffect(() => {
-    fetchBalance()
+    fetchBalance().catch(error => {
+      console.error('Error in useEffect:', error)
+      setError('Failed to fetch initial balance. Please try again later.')
+    })
   }, [fetchBalance])
 
-  return { balance, setBalance, deductToken, refreshBalance, error }
+  return { balance, setBalance, deductToken, refreshBalance, fetchBalance, error }
 }
 

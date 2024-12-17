@@ -1,6 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter, Poppins } from 'next/font/google'
+import { Inter, Space_Grotesk, Roboto_Mono, Poppins } from 'next/font/google'
 import { WalletProvider } from '@/contexts/WalletContext'
 import NavbarContent from '@/components/NavbarContent'
 import WalletComponentsWrapper from '@/components/WalletComponentsWrapper'
@@ -17,6 +17,18 @@ const poppins = Poppins({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-poppins',
+})
+
+const spaceGrotesk = Space_Grotesk({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-space-grotesk',
+})
+
+const robotoMono = Roboto_Mono({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-roboto-mono',
 })
 
 export const metadata: Metadata = {
@@ -39,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${inter.variable} ${poppins.variable} ${spaceGrotesk.variable} ${robotoMono.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>

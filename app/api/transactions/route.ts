@@ -5,18 +5,32 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const address = searchParams.get('address')?.toLowerCase()
   const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '3')
+  const limit = parseInt(searchParams.get('limit') || '2')
 
   if (!address) {
-    return NextResponse.json({ error: 'Address is required' }, { status: 400 })
+    return NextResponse.json({ 
+      success: false,
+      error: 'Address is required',
+      transactions: [],
+      total: 0
+    }, { status: 400 })
   }
 
   try {
     const { transactions, total } = await getTransactions(address, page, limit)
-    return NextResponse.json({ transactions, total })
+    return NextResponse.json({
+      success: true,
+      transactions: transactions || [],
+      total: total || 0
+    })
   } catch (error) {
     console.error('Error fetching transactions:', error)
-    return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 })
+    return NextResponse.json({ 
+      success: false,
+      error: 'Failed to fetch transactions',
+      transactions: [],
+      total: 0
+    }, { status: 500 })
   }
 }
 
@@ -25,15 +39,27 @@ export async function POST(request: Request) {
   const { address, type, amount, txHash } = body
 
   if (!address || !type || amount === undefined || !txHash) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    return NextResponse.json({ 
+      success: false,
+      error: 'Missing required fields' 
+    }, { status: 400 })
   }
 
   try {
-    await addTransaction({ address, type, amount, txHash })
+    await addTransaction({ 
+      address: address.toLowerCase(),
+      type,
+      amount,
+      txHash,
+      timestamp: new Date().toISOString()
+    })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error adding transaction:', error)
-    return NextResponse.json({ error: 'Failed to add transaction' }, { status: 500 })
+    return NextResponse.json({ 
+      success: false,
+      error: 'Failed to add transaction' 
+    }, { status: 500 })
   }
 }
 

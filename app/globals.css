@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-space-grotesk;
+  }
+}
+
+.chat-text {
+  @apply font-roboto-mono;
+}
+
 /* Add custom scrollbar styles */
 ::-webkit-scrollbar {
   width: 10px;
@@ -94,7 +107,7 @@
 .blocke-user-id-btn {
   font-size: 0.875rem;
   padding: 0.4rem 0.8rem;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
   font-weight: bold;
   min-width: 120px;
   height: 36px;
@@ -153,7 +166,7 @@
 .btn-23 {
   font-size: 0.875rem;
   padding: 0.4rem 0.8rem;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
   font-weight: bold;
   min-width: 120px;
   height: 36px;
@@ -280,7 +293,7 @@
   align-items: center;
   border: none;
   cursor: pointer;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
   font-weight: 700;
 }
 
@@ -420,7 +433,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-poppins);
+  font-family: var(--font-poppins), sans-serif;
   font-weight: 700;
   color: #4F46E5;
   transition: all 0.3s ease;
@@ -458,7 +471,7 @@
 
 /* Network Switch Button styles */
 .network-switch-btn {
-  font-family: var(--font-poppins);
+  font-family: var(--font-poppins), sans-serif;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -723,4 +736,3 @@ body, html {
 #__next {
   min-height: 100vh;
 }
-

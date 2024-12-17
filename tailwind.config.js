@@ -10,6 +10,8 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         poppins: ['var(--font-poppins)', 'sans-serif'],
+        'space-grotesk': ['var(--font-space-grotesk)', 'sans-serif'],
+        'roboto-mono': ['var(--font-roboto-mono)', 'monospace'],
       },
     },
   },
