@@ -11,6 +11,7 @@ import { ethers } from 'ethers'
 import { BE_TOKEN_ADDRESS, BE_TOKEN_ABI } from '@/utils/beTokenABI'
 import TransactionRejectedMessage from './TransactionRejectedMessage'
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
 
@@ -180,17 +181,19 @@ export default function NavbarContent() {
   return (
     <div className="flex justify-between items-center h-full w-full px-4">
       <div className="flex items-center">
-        <div className="relative h-10 w-10">
-          <Image
-            src="/blocke-logo.png"
-            alt="BlockE Logo"
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-contain"
-            priority
-          />
-        </div>
-        <h1 className="ml-2 mr-4 text-xl sm:text-2xl font-bold text-gray-800">BlockE</h1>
+        <Link href="/" className="flex items-center">
+          <div className="relative h-10 w-10">
+            <Image
+              src="/blocke-logo.png"
+              alt="BlockE Logo"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-contain"
+              priority
+            />
+          </div>
+          <h1 className="ml-2 mr-4 text-xl sm:text-2xl font-bold text-gray-800">BlockE</h1>
+        </Link>
         {isConnected && (
           <div className="flex items-center ml-2">
             {isCEO ? (

@@ -8,7 +8,6 @@ import TokenManagementSidebar from '@/components/ai/TokenManagementSidebar'
 import { formatDate } from '@/utils/formatDate'
 import { useAIBalance } from '@/hooks/useAIBalance'
 import Sidebar from '@/components/Sidebar'
-import SocialMediaLinks from '@/components/SocialMediaLinks'
 
 export default function BlockEAIPage() {
   const { isConnected, address } = useWallet()
@@ -83,7 +82,6 @@ export default function BlockEAIPage() {
           <TokenManagementSidebar />
         </div>
 
-        <SocialMediaLinks />
       </div>
     </div>
   )
