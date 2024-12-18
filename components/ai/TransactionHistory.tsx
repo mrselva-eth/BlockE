@@ -14,13 +14,6 @@ interface Transaction {
   timestamp: string
 }
 
-interface TransactionResponse {
-  success: boolean
-  transactions: Transaction[]
-  total: number
-  error?: string
-}
-
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -41,12 +34,7 @@ export default function TransactionHistory() {
         throw new Error('Failed to fetch transactions')
       }
       
-      const data: TransactionResponse = await response.json()
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch transactions')
-      }
-
+      const data = await response.json()
       setTransactions(data.transactions || [])
       setTotalPages(Math.max(1, Math.ceil((data.total || 0) / 2)))
     } catch (error) {

@@ -12,6 +12,7 @@ import { BE_TOKEN_ADDRESS, BE_TOKEN_ABI } from '@/utils/beTokenABI'
 import TransactionRejectedMessage from './TransactionRejectedMessage'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import NotificationIcon from './cw2/NotificationIcon'
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
 
@@ -223,7 +224,7 @@ export default function NavbarContent() {
         )}
       </div>
       {isConnected && (
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 group relative">
             <Image
               src="/blocke-logo.png"
@@ -239,6 +240,7 @@ export default function NavbarContent() {
               Your BE Token Balance (on Polygon)
             </div>
           </div>
+          <NotificationIcon size={24} />
           <button 
             onClick={handleMintClick}
             className="btn-23"

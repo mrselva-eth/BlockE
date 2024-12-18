@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAIBalance, updateAIBalance } from '@/lib/mongodb'
+import clientPromise from '@/lib/mongodb'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -10,30 +10,41 @@ export async function GET(request: Request) {
   }
 
   try {
-    const balance = await getAIBalance(address.toLowerCase())
-    return NextResponse.json({ balance })
+    const client = await clientPromise
+    const db = client.db('blocke')
+    const user = await db.collection('users').findOne({ address: address.toLowerCase() })
+    return NextResponse.json({ balance: user?.balance || 0 })
   } catch (error) {
-    console.error('Error fetching AI balance:', error)
-    return NextResponse.json({ error: 'Failed to fetch balance' }, { status: 500 })
+    console.error('Error in getAIBalance:', error)
+    return NextResponse.json({ error: 'Failed to fetch AI balance' }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
-  const { address, amount } = await request.json()
+  const { address, newBalance } = await request.json()
 
-  if (!address || amount === undefined) {
-    return NextResponse.json({ error: 'Address and amount are required' }, { status: 400 })
+  if (!address || newBalance === undefined) {
+    return NextResponse.json({ error: 'Address and new balance are required' }, { status: 400 })
   }
 
   try {
-    const currentBalance = await getAIBalance(address.toLowerCase())
-    const newBalance = currentBalance + amount
-    await updateAIBalance(address.toLowerCase(), newBalance)
-
-    return NextResponse.json({ newBalance })
+    const client = await clientPromise
+    const db = client.db('blocke')
+    await db.collection('users').updateOne(
+      { address: address.toLowerCase() },
+      { 
+        $set: { 
+          address: address.toLowerCase(),
+          balance: newBalance,
+          lastUpdated: new Date()
+        }
+      },
+      { upsert: true }
+    )
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error updating AI balance:', error)
-    return NextResponse.json({ error: 'Failed to update balance' }, { status: 500 })
+    console.error('Error in updateAIBalance:', error)
+    return NextResponse.json({ error: 'Failed to update AI balance' }, { status: 500 })
   }
 }
 

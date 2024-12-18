@@ -38,11 +38,23 @@ export const metadata: Metadata = {
     icon: [
       {
         url: '/blocke-logo.png',
-        href: '/blocke-logo.png',
+        sizes: '32x32',
+        type: 'image/png',
       },
+      {
+        url: '/blocke-logo.png',
+        sizes: '16x16',
+        type: 'image/png',
+      }
     ],
-    apple: '/blocke-logo.png',
+    apple: {
+      url: '/blocke-logo.png',
+      sizes: '180x180',
+      type: 'image/png',
+    },
+    shortcut: '/blocke-logo.png',
   },
+  manifest: '/manifest.json'
 }
 
 export default function RootLayout({
@@ -54,6 +66,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${poppins.variable} ${spaceGrotesk.variable} ${robotoMono.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/blocke-logo.png" sizes="any" />
       </head>
       <body className="font-sans antialiased">
         <WalletProvider>

@@ -1,35 +1,45 @@
 import { NextResponse } from 'next/server'
-import { getTransactions, addTransaction } from '@/lib/mongodb'
+import clientPromise from '@/lib/mongodb'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const address = searchParams.get('address')?.toLowerCase()
+  const address = searchParams.get('address')
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '2')
 
   if (!address) {
-    return NextResponse.json({ 
-      success: false,
-      error: 'Address is required',
-      transactions: [],
-      total: 0
-    }, { status: 400 })
+    return NextResponse.json({ error: 'Address is required' }, { status: 400 })
   }
 
   try {
-    const { transactions, total } = await getTransactions(address, page, limit)
+    const client = await clientPromise
+    const db = client.db('blocke')
+    const skip = (page - 1) * limit
+
+    const [transactions, totalCount] = await Promise.all([
+      db.collection('transactions')
+        .find({ address: address.toLowerCase() })
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray(),
+      db.collection('transactions')
+        .countDocuments({ address: address.toLowerCase() })
+    ])
+
     return NextResponse.json({
-      success: true,
-      transactions: transactions || [],
-      total: total || 0
+      transactions: transactions.map(tx => ({
+        ...tx,
+        _id: tx._id.toString()
+      })),
+      total: totalCount,
+      success: true
     })
   } catch (error) {
-    console.error('Error fetching transactions:', error)
+    console.error('Error in getTransactions:', error)
     return NextResponse.json({ 
-      success: false,
       error: 'Failed to fetch transactions',
-      transactions: [],
-      total: 0
+      success: false
     }, { status: 500 })
   }
 }
@@ -40,25 +50,39 @@ export async function POST(request: Request) {
 
   if (!address || !type || amount === undefined || !txHash) {
     return NextResponse.json({ 
-      success: false,
-      error: 'Missing required fields' 
+      error: 'Missing required fields',
+      success: false 
     }, { status: 400 })
   }
 
   try {
-    await addTransaction({ 
+    const client = await clientPromise
+    const db = client.db('blocke')
+    
+    const result = await db.collection('transactions').insertOne({
       address: address.toLowerCase(),
       type,
       amount,
       txHash,
-      timestamp: new Date().toISOString()
+      timestamp: new Date()
     })
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error adding transaction:', error)
+
     return NextResponse.json({ 
-      success: false,
-      error: 'Failed to add transaction' 
+      success: true,
+      transaction: {
+        _id: result.insertedId.toString(),
+        address: address.toLowerCase(),
+        type,
+        amount,
+        txHash,
+        timestamp: new Date()
+      }
+    })
+  } catch (error) {
+    console.error('Error in addTransaction:', error)
+    return NextResponse.json({ 
+      error: 'Failed to add transaction',
+      success: false 
     }, { status: 500 })
   }
 }
