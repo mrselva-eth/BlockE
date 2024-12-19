@@ -4,11 +4,11 @@ import { useState } from 'react'
 import { Clock } from 'lucide-react'
 
 interface AutoDisconnectToggleProps {
-  onToggle: (isEnabled: boolean) => void
-  isEnabled: boolean
+  isEnabled: boolean;
+  onToggle: (isEnabled: boolean) => void;
 }
 
-export default function AutoDisconnectToggle({ onToggle, isEnabled }: AutoDisconnectToggleProps) {
+export default function AutoDisconnectToggle({ isEnabled, onToggle }: AutoDisconnectToggleProps) {
   const [showTooltip, setShowTooltip] = useState(false)
 
   return (

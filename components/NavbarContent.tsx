@@ -12,7 +12,7 @@ import { BE_TOKEN_ADDRESS, BE_TOKEN_ABI } from '@/utils/beTokenABI'
 import TransactionRejectedMessage from './TransactionRejectedMessage'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import NotificationIcon from './cw2/NotificationIcon'
+import NotificationIcon from './cw2/NotificationIcon' // Added import
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
 
@@ -34,6 +34,7 @@ export default function NavbarContent() {
   const [tokenBalance, setTokenBalance] = useState<string>('0')
   const pathname = usePathname()
   const [currentNetwork, setCurrentNetwork] = useState<'Ethereum' | 'Polygon' | null>(null)
+  const [profileImage, setProfileImage] = useState<string | null>(null)
 
   const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
@@ -179,6 +180,26 @@ export default function NavbarContent() {
     }
   }, [])
 
+  useEffect(() => {
+    if (address) {
+      fetchProfileImage()
+    }
+  }, [address])
+
+  const fetchProfileImage = async () => {
+    try {
+      const response = await fetch(`/api/profile?address=${address}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.profile?.profileImage) {
+          setProfileImage(data.profile.profileImage)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching profile image:', error)
+    }
+  }
+
   return (
     <div className="flex justify-between items-center h-full w-full px-4">
       <div className="flex items-center">
@@ -224,7 +245,7 @@ export default function NavbarContent() {
         )}
       </div>
       {isConnected && (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 group relative">
             <Image
               src="/blocke-logo.png"
@@ -247,20 +268,32 @@ export default function NavbarContent() {
           >
             <span>Mint BE</span>
           </button>
-          <button className="Btn-Container">
-            <span className="text">BlockE UID</span>
-            <div className="icon-Container">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 8h14M8 1l7 7-7 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-          </button>
+          <Link href="/blocke-uid">
+            <button className="Btn-Container">
+              <span className="text">BlockE UID</span>
+              <div className="icon-Container">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 8h14M8 1l7 7-7 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </button>
+          </Link>
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
+              className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors overflow-hidden"
             >
-              <User size={24} />
+              {profileImage ? (
+                <Image
+                  src={`data:image/jpeg;base64,${profileImage}`}
+                  alt="Profile"
+                  width={24}
+                  height={24}
+                  className="rounded-full"
+                />
+              ) : (
+                <User size={24} />
+              )}
             </button>
             {showDropdown && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-10">

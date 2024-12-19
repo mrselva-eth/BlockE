@@ -27,3 +27,21 @@ if (process.env.NODE_ENV === 'development') {
 
 export default clientPromise
 
+
+export async function getAIBalance(address: string): Promise<number> {
+  const client = await clientPromise
+  const db = client.db('blocke')
+  const user = await db.collection('users').findOne({ address: address.toLowerCase() })
+  return user?.balance || 0
+}
+
+export async function updateAIBalance(address: string, newBalance: number): Promise<void> {
+  const client = await clientPromise
+  const db = client.db('blocke')
+  await db.collection('users').updateOne(
+    { address: address.toLowerCase() },
+    { $set: { balance: newBalance } },
+    { upsert: true }
+  )
+}
+

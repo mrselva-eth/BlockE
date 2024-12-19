@@ -2,23 +2,27 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
-import { useRouter } from 'next/navigation'
 import AnimationWrapper from './AnimationWrapper'
 import AutoDisconnectAlert from './AutoDisconnectAlert'
 import AutoDisconnectToggle from './AutoDisconnectToggle'
 
 export default function WalletComponentsWrapper() {
   const { disconnectWallet, isConnected } = useWallet()
-  const router = useRouter()
   const [showDisconnectAlert, setShowDisconnectAlert] = useState(false)
   const [lastActiveTime, setLastActiveTime] = useState(Date.now())
   const [isAutoDisconnectEnabled, setIsAutoDisconnectEnabled] = useState(true)
 
+  useEffect(() => {
+    const savedPreference = localStorage.getItem('autoDisconnectEnabled')
+    if (savedPreference !== null) {
+      setIsAutoDisconnectEnabled(savedPreference === 'true')
+    }
+  }, [])
+
   const handleDisconnect = useCallback(() => {
     disconnectWallet()
     setShowDisconnectAlert(false)
-    router.push('/')
-  }, [disconnectWallet, router])
+  }, [disconnectWallet])
 
   const resetInactivityTimer = useCallback(() => {
     setLastActiveTime(Date.now())
@@ -27,6 +31,7 @@ export default function WalletComponentsWrapper() {
 
   const handleToggleAutoDisconnect = useCallback((isEnabled: boolean) => {
     setIsAutoDisconnectEnabled(isEnabled)
+    localStorage.setItem('autoDisconnectEnabled', isEnabled.toString())
     if (isEnabled) {
       resetInactivityTimer()
     } else {
@@ -84,12 +89,16 @@ export default function WalletComponentsWrapper() {
     window.addEventListener('keydown', handleActivity)
     window.addEventListener('scroll', handleActivity)
     window.addEventListener('click', handleActivity)
+    window.addEventListener('touchstart', handleActivity) // Added touchstart event listener
+    window.addEventListener('touchmove', handleActivity) // Added touchmove event listener
 
     return () => {
       window.removeEventListener('mousemove', handleActivity)
       window.removeEventListener('keydown', handleActivity)
       window.removeEventListener('scroll', handleActivity)
       window.removeEventListener('click', handleActivity)
+      window.removeEventListener('touchstart', handleActivity) // Added touchstart event listener removal
+      window.removeEventListener('touchmove', handleActivity) // Added touchmove event listener removal
     }
   }, [resetInactivityTimer])
 

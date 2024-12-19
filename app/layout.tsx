@@ -79,6 +79,14 @@ export default function RootLayout({
           </main>
           <NetworkSwitchAlert />
         </WalletProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.ETHERSCAN_API_KEY = "${process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY}";
+              window.INFURA_PROJECT_ID = "${process.env.NEXT_PUBLIC_INFURA_PROJECT_ID}";
+            `,
+          }}
+        />
       </body>
     </html>
   )
