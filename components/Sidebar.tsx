@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Menu, X, Home, LayoutDashboard, Coins, Binary, Bot, ArrowLeftRight, BarChart2, MessageCircle, Network, ImageIcon, FishIcon as Whale, FuelIcon as GasPump } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
 
@@ -26,6 +27,7 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const { address } = useWallet()
+  const pathname = usePathname()
 
   const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
@@ -68,10 +70,17 @@ export default function Sidebar() {
               <li key={item.name}>
                 <Link
                   href={item.href}
-                  className="flex items-center px-4 py-2 text-gray-700 rounded hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                  className={`flex items-center px-4 py-2 text-gray-700 rounded hover:bg-gray-100 hover:text-gray-900 transition-colors relative ${
+                    pathname === item.href
+                      ? 'text-purple-600 font-semibold'
+                      : ''
+                  }`}
                 >
                   {item.icon && <item.icon className="mr-2 h-5 w-5" />}
                   {item.name}
+                  {pathname === item.href && (
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-pink-500"></span>
+                  )}
                 </Link>
               </li>
             ))}

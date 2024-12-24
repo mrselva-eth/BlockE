@@ -6,6 +6,12 @@ import NavbarContent from '@/components/NavbarContent'
 import WalletComponentsWrapper from '@/components/WalletComponentsWrapper'
 import NetworkSwitchAlert from '@/components/NetworkSwitchAlert'
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', event => {
+    console.error('Unhandled rejection (promise: ', event.promise, ', reason: ', event.reason, ').')
+  })
+}
+
 const inter = Inter({ 
   subsets: ['latin'],
   display: 'swap',

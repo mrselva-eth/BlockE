@@ -33,6 +33,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData()
     const address = formData.get('address') as string
+    const name = formData.get('name') as string
     const bio = formData.get('bio') as string
     const instagramLink = formData.get('instagramLink') as string
     const youtubeLink = formData.get('youtubeLink') as string
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
       { address: address.toLowerCase() },
       {
         $set: {
+          name,
           bio,
           instagramLink,
           youtubeLink,

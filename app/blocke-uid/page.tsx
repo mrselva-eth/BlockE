@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
 import BlockEUIDContent from '@/components/blocke-uid/BlockEUIDContent'
 import ProfileContent from '@/components/blocke-uid/ProfileContent'
@@ -8,6 +8,8 @@ import WalletSettingsContent from '@/components/blocke-uid/WalletSettingsContent
 import { Wallet, User, Settings, X } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { ethers } from 'ethers'
+import { BLOCKE_UID_CONTRACT_ADDRESS, BLOCKE_UID_ABI } from '@/utils/blockEUIDContract'
 
 const pages = [
   { name: 'BlockE UID', icon: Wallet, component: BlockEUIDContent },
@@ -16,9 +18,25 @@ const pages = [
 ]
 
 export default function BlockEUIDPage() {
-  const { isConnected } = useWallet()
+  const { isConnected, address } = useWallet()
   const [activePage, setActivePage] = useState('BlockE UID')
+  const [hasUID, setHasUID] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    //Removed useEffect hook that was checking for UID ownership
+  }, [])
+
+  useEffect(() => {
+    if (!hasUID && activePage === 'Profile') {
+      setActivePage('BlockE UID')
+    }
+  }, [hasUID, activePage])
+
+  const handleUIDsFetched = (hasUID: boolean) => {
+    setHasUID(hasUID);
+  };
 
   if (!isConnected) {
     return (
@@ -26,6 +44,15 @@ export default function BlockEUIDPage() {
         <p className="text-lg text-gray-600">Please connect your wallet to access BlockE UID</p>
       </div>
     )
+  }
+
+  const handlePageChange = (pageName: string) => {
+    if (pageName === 'Profile' && !hasUID) {
+      setError('You need to own a BlockE UID to access the Profile page')
+      return
+    }
+    setError(null)
+    setActivePage(pageName)
   }
 
   const ActiveComponent = pages.find(page => page.name === activePage)?.component || BlockEUIDContent
@@ -41,7 +68,6 @@ export default function BlockEUIDPage() {
           objectFit="cover"
           quality={100}
           priority
-          className="opacity-30"
         />
       </div>
 
@@ -52,12 +78,17 @@ export default function BlockEUIDPage() {
           {pages.map((page) => (
             <button
               key={page.name}
-              onClick={() => setActivePage(page.name)}
+              onClick={() => handlePageChange(page.name)}
               className={`flex items-center w-full p-3 rounded-lg mb-2 transition-all duration-300 ${
+                page.name === 'Profile' && !hasUID
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
+              } ${
                 activePage === page.name
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                   : 'hover:bg-white/50'
               }`}
+              disabled={page.name === 'Profile' && !hasUID}
             >
               <page.icon className="mr-2" size={20} />
               {page.name}
@@ -66,10 +97,18 @@ export default function BlockEUIDPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-grow p-6">
-          <div className="max-w-4xl mx-auto">
-            <ActiveComponent />
-          </div>
+        <div className="flex-grow p-6 flex items-center justify-center">
+          {error && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-md">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700">{error}</p>
+              </div>
+            </div>
+          )}
+          
+          {
+            <ActiveComponent hasUID={hasUID} onUIDsFetched={handleUIDsFetched} />
+          }
         </div>
       </div>
 
