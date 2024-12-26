@@ -3,12 +3,6 @@
 import { useState } from 'react'
 import { X, Upload, Users } from 'lucide-react'
 import Image from 'next/image'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 
 interface Member {
   address: string;
@@ -37,6 +31,8 @@ export default function MembersListModal({
 }: MembersListModalProps) {
   const [uploading, setUploading] = useState(false)
 
+  if (!isOpen) return null;
+
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -56,12 +52,16 @@ export default function MembersListModal({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-md bg-[#e0e7ff]">
-        <DialogHeader>
-          <DialogTitle>Group Members</DialogTitle>
-        </DialogHeader>
-        
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-[#e0e7ff] rounded-lg p-6 max-w-md w-full mx-4">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
+        >
+          <X size={24} />
+        </button>
+
         <div className="mt-4">
           <div className="flex flex-col items-center mb-6">
             <div className="relative">
@@ -120,8 +120,8 @@ export default function MembersListModal({
             ))}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }
 
