@@ -31,7 +31,7 @@ export default function MembersListModal({
 }: MembersListModalProps) {
   const [uploading, setUploading] = useState(false)
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -52,12 +52,11 @@ export default function MembersListModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-[#e0e7ff] rounded-lg p-6 max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+      <div className="bg-[#e0e7ff] rounded-xl p-6 w-full max-w-md mx-4 relative">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
+          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 transition-colors"
         >
           <X size={24} />
         </button>
