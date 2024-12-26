@@ -98,7 +98,7 @@ export default function MintModal({
                   transition={{ delay: 0.7 }}
                   className="text-gray-600 mt-1"
                 >
-                  Congratulations! You've received 1000 BE tokens.
+                  Congratulations! You&apos;ve received 1000 BE tokens.
                 </motion.p>
               </div>
               {showClose && (
@@ -122,6 +122,7 @@ export default function MintModal({
                   <span>Switch to {targetNetwork}</span>
                 </button>
               ) : (
+                <>
                 <button
                   onClick={onMint}
                   disabled={isMinting}
@@ -131,10 +132,9 @@ export default function MintModal({
                     {isMinting ? 'Minting BE...' : needsPayment ? 'Mint BE (10 MATIC)' : 'Mint BE'}
                   </span>
                 </button>
+                <p className="text-xs text-gray-500 mt-2">You don&apos;t own any BEUIDs yet.</p>
+                </>
               )}
-              <p className="text-sm text-gray-600">
-                You don&apos;t own any BEUIDs yet.
-              </p>
             </>
           )}
         </div>

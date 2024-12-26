@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Send, Smile, Users } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
 import dynamic from 'next/dynamic'
@@ -52,7 +52,7 @@ export default function ChatInterface({ selectedContact, selectedGroup, isGroup 
   const selectedEntity = isGroup ? selectedGroup : selectedContact
   const selectedAddress = isGroup ? selectedGroup?.groupName : selectedContact?.contactAddress
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!selectedEntity || !address) return
 
     setIsLoading(true)
@@ -80,7 +80,7 @@ export default function ChatInterface({ selectedContact, selectedGroup, isGroup 
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [address, selectedAddress, isGroup, selectedEntity])
 
   useEffect(() => {
     if (selectedEntity && address) {
@@ -88,7 +88,7 @@ export default function ChatInterface({ selectedContact, selectedGroup, isGroup 
       const interval = setInterval(fetchMessages, 5000)
       return () => clearInterval(interval)
     }
-  }, [selectedEntity, address, fetchMessages, selectedAddress, isGroup])
+  }, [selectedEntity, address, fetchMessages])
 
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedEntity || !address) return

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
 import { Instagram, Youtube, Linkedin, Edit2, Camera, Trash2, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
@@ -29,13 +29,7 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
-  const defaultImage = isCEO ? '/ceo.png' : '/user.png'
-
-  useEffect(() => {
-    fetchProfile()
-  }, [address])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!address) return
 
     try {
@@ -49,7 +43,32 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
     } catch(error) {
       console.error('Error fetching profile:', error)
     }
+  }, [address])
+
+  useEffect(() => {
+    fetchProfile()
+  }, [fetchProfile])
+
+  // Add hasUID check at the beginning
+  if (!hasUID) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-16rem)]">
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 max-w-lg">
+          <div className="flex items-start">
+            <AlertCircle className="text-yellow-400 mt-0.5 mr-3" size={20} />
+            <div>
+              <p className="text-yellow-700 font-medium">Access Restricted</p>
+              <p className="text-yellow-600 mt-1">
+                You need to own a BlockE UID to access the Profile page. Please mint a BlockE UID first.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
+
+  const defaultImage = isCEO ? '/ceo.png' : '/user.png'
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -87,24 +106,6 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
       console.error('Error saving profile:', error)
       alert('Failed to save profile. Please try again.')
     }
-  }
-
-  if (!hasUID) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-16rem)]">
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 max-w-lg">
-          <div className="flex items-start">
-            <AlertCircle className="text-yellow-400 mt-0.5 mr-3" size={20} />
-            <div>
-              <p className="text-yellow-700 font-medium">Access Restricted</p>
-              <p className="text-yellow-600 mt-1">
-                You need to own a BlockE UID to access the Profile page. Please mint a BlockE UID first.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   if (!profile) {

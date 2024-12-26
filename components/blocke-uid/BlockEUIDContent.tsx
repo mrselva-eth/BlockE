@@ -49,10 +49,8 @@ export default function BlockEUIDContent({ hasUID, onUIDsFetched }: BlockEUIDCon
   }, [address, onUIDsFetched])
 
   useEffect(() => {
-    if (address) {
-      fetchOwnedUIDs()
-    }
-  }, [address, fetchOwnedUIDs])
+    fetchOwnedUIDs()
+  }, [fetchOwnedUIDs])
 
   const handleMint = async () => {
     if (!id || !/^\d+$/.test(id)) {
@@ -179,7 +177,7 @@ export default function BlockEUIDContent({ hasUID, onUIDsFetched }: BlockEUIDCon
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500">You don't own any BEUIDs yet.</p>
+            <p className="text-gray-500">You don&apos;t own any BEUIDs yet.</p>
           )}
         </div>
       </div>

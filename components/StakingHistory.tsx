@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
 import { useWallet } from '@/contexts/WalletContext'
 import { BE_STAKING_ADDRESS, BE_STAKING_ABI } from '@/utils/beStakingABI'
@@ -36,17 +36,49 @@ export default function StakingHistory({ onStakeUpdate, transactionPending }: St
   const [showRejected, setShowRejected] = useState(false)
   const [unstaking, setUnstaking] = useState<number | null>(null)
 
+  const fetchStakes = useCallback(async () => {
+    if (!address) return
+
+    setIsLoading(true)
+    try {
+      const provider = new ethers.JsonRpcProvider('https://polygon-rpc.com')
+      const contract = new ethers.Contract(BE_STAKING_ADDRESS, BE_STAKING_ABI, provider)
+    
+      const filter = contract.filters.Staked(address)
+      const events = await contract.queryFilter(filter)
+
+      const userStakes = await contract.getUserStakes(address)
+      const stakesWithTx: StakeWithTx[] = userStakes.map((stake: Stake, index: number) => ({
+        amount: stake.amount || BigInt(0),
+        startTime: stake.startTime || BigInt(0),
+        endTime: stake.endTime || BigInt(0),
+        apr: stake.apr || BigInt(0),
+        reward: stake.reward || BigInt(0),
+        claimed: stake.claimed || false,
+        unstaked: stake.unstaked || false,
+        transactionHash: events[index]?.transactionHash,
+        transactionStatus: events[index]?.transactionHash ? 'success' : 'pending'
+      }))
+      
+      setStakes(stakesWithTx)
+    } catch (error) {
+      console.error('Error fetching stakes:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [address])
+
   useEffect(() => {
     if (address) {
       fetchStakes()
     }
-  }, [address])
+  }, [address, fetchStakes])
 
   useEffect(() => {
     if (transactionPending) {
       fetchStakes()
     }
-  }, [transactionPending])
+  }, [transactionPending, fetchStakes])
 
   useEffect(() => {
     const checkTransactionStatuses = async () => {
@@ -69,36 +101,6 @@ export default function StakingHistory({ onStakeUpdate, transactionPending }: St
     return () => clearInterval(interval)
   }, [stakes])
 
-  const fetchStakes = async () => {
-    if (!address) return
-
-    try {
-      const provider = new ethers.JsonRpcProvider('https://polygon-rpc.com')
-      const contract = new ethers.Contract(BE_STAKING_ADDRESS, BE_STAKING_ABI, provider)
-      
-      const filter = contract.filters.Staked(address)
-      const events = await contract.queryFilter(filter)
-    
-      const userStakes = await contract.getUserStakes(address)
-      const stakesWithTx: StakeWithTx[] = userStakes.map((stake: Stake, index: number) => ({
-        amount: stake.amount || BigInt(0),
-        startTime: stake.startTime || BigInt(0),
-        endTime: stake.endTime || BigInt(0),
-        apr: stake.apr || BigInt(0),
-        reward: stake.reward || BigInt(0),
-        claimed: stake.claimed || false,
-        unstaked: stake.unstaked || false,
-        transactionHash: events[index]?.transactionHash,
-        transactionStatus: events[index]?.transactionHash ? 'success' : 'pending'
-      }))
-      
-      setStakes(stakesWithTx)
-    } catch (error) {
-      console.error('Error fetching stakes:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleClaim = async (index: number) => {
     if (!address) return

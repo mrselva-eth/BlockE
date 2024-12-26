@@ -95,7 +95,7 @@ export default function MintModal({
                   transition={{ delay: 0.7 }}
                   className="text-gray-600 mt-1"
                 >
-                  Congratulations! You've received 1000 BE tokens.
+                  Congratulations! You&apos;ve received 1000 BE tokens.
                 </motion.p>
               </div>
               {showClose && (
