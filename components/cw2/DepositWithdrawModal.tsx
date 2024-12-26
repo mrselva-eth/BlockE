@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { deposit, withdraw } from '@/utils/cw2ContractInteractions'
 import { useWallet } from '@/contexts/WalletContext'
 import { format } from 'date-fns'
+import TransactionStatus from '@/components/TransactionStatus'
 
 interface Transaction {
   _id: string;
@@ -25,12 +26,11 @@ export default function DepositWithdrawModal({ onClose }: DepositWithdrawModalPr
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [isCompleted, setIsCompleted] = useState(false)
+  const [showCornerNotification, setShowCornerNotification] = useState(false)
 
-  useEffect(() => {
-    fetchTransactions()
-  }, [currentPage])
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       const response = await fetch(`/api/transactions?address=${address}&page=${currentPage}&limit=2`)
       const data = await response.json()
@@ -39,22 +39,34 @@ export default function DepositWithdrawModal({ onClose }: DepositWithdrawModalPr
     } catch (err) {
       console.error('Failed to fetch transactions:', err)
     }
-  }
+  }, [address, currentPage])
+
+  useEffect(() => {
+    fetchTransactions()
+  }, [currentPage, fetchTransactions])
 
   const handleTransaction = async () => {
     setIsLoading(true)
     setError(null)
+    setIsProcessing(true)
     try {
       if (mode === 'deposit') {
         await deposit(amount)
       } else {
         await withdraw(amount)
       }
+      setIsProcessing(false)
+      setIsCompleted(true)
+      setTimeout(() => {
+        setIsCompleted(false)
+        setShowCornerNotification(true)
+      }, 3000)
       await fetchTransactions()
       setAmount('')
     } catch (err: any) {
       console.error(`Failed to ${mode}:`, err)
       setError(err.message || `Failed to ${mode}. Please try again.`)
+      setIsProcessing(false)
     } finally {
       setIsLoading(false)
     }
@@ -153,7 +165,7 @@ export default function DepositWithdrawModal({ onClose }: DepositWithdrawModalPr
               </div>
             ))}
           </div>
-          
+
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-4">
               <button
@@ -176,6 +188,25 @@ export default function DepositWithdrawModal({ onClose }: DepositWithdrawModalPr
             </div>
           )}
         </div>
+        {(isProcessing || isCompleted) && !showCornerNotification && (
+          <TransactionStatus
+            isProcessing={isProcessing}
+            isCompleted={isCompleted}
+            onClose={() => {
+              setIsProcessing(false)
+              setIsCompleted(false)
+              setShowCornerNotification(true)
+            }}
+          />
+        )}
+        {showCornerNotification && (
+          <TransactionStatus
+            isProcessing={false}
+            isCompleted={true}
+            onClose={() => setShowCornerNotification(false)}
+            isCornerNotification={true}
+          />
+        )}
       </div>
     </div>
   )

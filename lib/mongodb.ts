@@ -27,7 +27,6 @@ if (process.env.NODE_ENV === 'development') {
 
 export default clientPromise
 
-
 export async function getAIBalance(address: string): Promise<number> {
   const client = await clientPromise
   const db = client.db('blocke')
@@ -43,5 +42,19 @@ export async function updateAIBalance(address: string, newBalance: number): Prom
     { $set: { balance: newBalance } },
     { upsert: true }
   )
+}
+
+export async function addTransaction(transaction: {
+  address: string;
+  type: string;
+  amount: number;
+  txHash: string;
+}) {
+  const client = await clientPromise;
+  const db = client.db('blocke');
+  await db.collection('transactions').insertOne({
+    ...transaction,
+    timestamp: new Date()
+  });
 }
 

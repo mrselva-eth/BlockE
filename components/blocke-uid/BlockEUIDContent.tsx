@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
 import { ethers } from 'ethers'
 import { BLOCKE_UID_CONTRACT_ADDRESS, BLOCKE_UID_ABI } from '@/utils/blockEUIDContract'
@@ -20,11 +20,7 @@ export default function BlockEUIDContent({ hasUID, onUIDsFetched }: BlockEUIDCon
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(true)
 
-  useEffect(() => {
-    fetchOwnedUIDs()
-  }, [address])
-
-  const fetchOwnedUIDs = async () => {
+  const fetchOwnedUIDs = useCallback(async () => {
     if (!address) return
 
     setIsFetching(true)
@@ -50,7 +46,13 @@ export default function BlockEUIDContent({ hasUID, onUIDsFetched }: BlockEUIDCon
     } finally {
       setIsFetching(false)
     }
-  }
+  }, [address, onUIDsFetched])
+
+  useEffect(() => {
+    if (address) {
+      fetchOwnedUIDs()
+    }
+  }, [address, fetchOwnedUIDs])
 
   const handleMint = async () => {
     if (!id || !/^\d+$/.test(id)) {

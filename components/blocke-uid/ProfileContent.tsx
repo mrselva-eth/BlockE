@@ -23,25 +23,6 @@ interface ProfileContentProps {
 }
 
 export default function ProfileContent({ hasUID }: ProfileContentProps) {
-  // Add hasUID check at the beginning
-  if (!hasUID) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-16rem)]">
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 max-w-lg">
-          <div className="flex items-start">
-            <AlertCircle className="text-yellow-400 mt-0.5 mr-3" size={20} />
-            <div>
-              <p className="text-yellow-700 font-medium">Access Restricted</p>
-              <p className="text-yellow-600 mt-1">
-                You need to own a BlockE UID to access the Profile page. Please mint a BlockE UID first.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   const { address } = useWallet()
   const [isEditing, setIsEditing] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -106,6 +87,24 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
       console.error('Error saving profile:', error)
       alert('Failed to save profile. Please try again.')
     }
+  }
+
+  if (!hasUID) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-16rem)]">
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 max-w-lg">
+          <div className="flex items-start">
+            <AlertCircle className="text-yellow-400 mt-0.5 mr-3" size={20} />
+            <div>
+              <p className="text-yellow-700 font-medium">Access Restricted</p>
+              <p className="text-yellow-600 mt-1">
+                You need to own a BlockE UID to access the Profile page. Please mint a BlockE UID first.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!profile) {

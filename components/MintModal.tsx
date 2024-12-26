@@ -132,6 +132,9 @@ export default function MintModal({
                   </span>
                 </button>
               )}
+              <p className="text-sm text-gray-600">
+                You don&apos;t own any BEUIDs yet.
+              </p>
             </>
           )}
         </div>

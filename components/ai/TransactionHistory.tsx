@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { format } from 'date-fns'
 import { useWallet } from '@/contexts/WalletContext'
 import { ChevronLeft, ChevronRight, ExternalLink, AlertCircle } from 'lucide-react'
@@ -22,7 +22,7 @@ export default function TransactionHistory() {
   const [error, setError] = useState<string | null>(null)
   const { address } = useWallet()
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     if (!address) return
 
     setIsLoading(true)
@@ -45,11 +45,13 @@ export default function TransactionHistory() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [address, currentPage])
 
   useEffect(() => {
-    fetchTransactions()
-  }, [address, currentPage])
+    if (address) {
+      fetchTransactions()
+    }
+  }, [address, currentPage, fetchTransactions])
 
   if (isLoading) {
     return (

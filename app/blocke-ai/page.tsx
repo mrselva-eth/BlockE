@@ -11,7 +11,7 @@ import Sidebar from '@/components/Sidebar'
 
 export default function BlockEAIPage() {
   const { isConnected, address } = useWallet()
-  const { balance } = useAIBalance()
+  const { balance, refreshBalance } = useAIBalance()
   const [currentTime, setCurrentTime] = useState(new Date())
 
   useEffect(() => {
@@ -21,6 +21,17 @@ export default function BlockEAIPage() {
 
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    // Initial fetch
+    refreshBalance()
+    
+    // Set up polling interval
+    const intervalId = setInterval(refreshBalance, 3000)
+    
+    // Cleanup
+    return () => clearInterval(intervalId)
+  }, [refreshBalance])
 
   if (!isConnected) {
     return (
@@ -41,7 +52,7 @@ export default function BlockEAIPage() {
           objectFit="cover"
           quality={100}
           priority
-          className="!opacity-100"
+          className="opacity-50"
         />
       </div>
 
@@ -54,18 +65,14 @@ export default function BlockEAIPage() {
           {/* Top Bar with Balance and Time */}
           <div className="absolute top-4 w-full px-4 flex justify-between items-start">
             {/* Balance - Left Side */}
-            <div className="rounded-lg p-4 bg-gradient-to-r from-indigo-500/90 to-purple-500/90 backdrop-blur-sm text-white">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-sm">Available</span>
-              </div>
+            <div className="rounded-lg p-4 bg-gradient-to-r from-indigo-500/90 to-purple-500/90 backdrop-blur-sm text-white shadow-lg">
               <div className="text-3xl font-bold">{balance} BE</div>
               <div className="text-sm opacity-90">BlockE AI Deposited Balance</div>
             </div>
 
             {/* Time - Right Side */}
-            <div className="p-2 rounded-lg bg-white/80 backdrop-blur-sm">
-              <div className="text-sm text-gray-800">
+            <div className="p-2 rounded-lg bg-white/80 backdrop-blur-sm shadow-md">
+              <div className="text-sm text-gray-800 font-medium">
                 {formatDate(currentTime)}
               </div>
             </div>
@@ -73,7 +80,7 @@ export default function BlockEAIPage() {
 
           {/* Centered Chat Interface */}
           <div className="flex-grow flex justify-center items-center px-4">
-            <div className="w-[800px] h-[600px] bg-white/95 backdrop-blur-sm rounded-xl shadow-lg">
+            <div className="w-[800px] h-[600px] bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-purple-200 relative">
               <ChatInterface />
             </div>
           </div>

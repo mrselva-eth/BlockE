@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Search, Plus } from 'lucide-react'
 import AddContactModal from './AddContactModal'
 import { useWallet } from '@/contexts/WalletContext'
@@ -21,17 +21,7 @@ export default function ContactsMenu({ onSelectContact, selectedContact }: Conta
   const [contacts, setContacts] = useState<Contact[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  const truncateAddress = (addr: string) => {
-    return `${addr.slice(0, 5)}...${addr.slice(-3)}`
-  }
-
-  useEffect(() => {
-    if (address) {
-      fetchContacts()
-    }
-  }, [address])
-
-  const fetchContacts = () => {
+  const fetchContacts = useCallback(() => {
     if (!address) return;
 
     fetch(`/api/contacts?userAddress=${address}`)
@@ -48,7 +38,17 @@ export default function ContactsMenu({ onSelectContact, selectedContact }: Conta
         console.error('Failed to fetch contacts:', err)
         setError('Failed to load contacts. Please try again.')
       })
+  }, [address])
+
+  const truncateAddress = (addr: string) => {
+    return `${addr.slice(0, 5)}...${addr.slice(-3)}`
   }
+
+  useEffect(() => {
+    if (address) {
+      fetchContacts()
+    }
+  }, [address, fetchContacts])
 
   const handleAddContact = async (name: string, contactAddress: string) => {
     try {

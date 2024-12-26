@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Bell } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
 import { format } from 'date-fns'
@@ -24,15 +24,7 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
 
-  useEffect(() => {
-    if (address) {
-      fetchNotifications()
-      const interval = setInterval(fetchNotifications, 10000)
-      return () => clearInterval(interval)
-    }
-  }, [address])
-
-  const fetchNotifications = () => {
+  const fetchNotifications = useCallback(() => {
     if (!address) return;
 
     fetch(`/api/notifications?userAddress=${address}`)
@@ -49,7 +41,15 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
       .catch(err => {
         console.error('Failed to fetch notifications:', err)
       })
-  }
+  }, [address])
+
+  useEffect(() => {
+    if (address) {
+      fetchNotifications()
+      const interval = setInterval(fetchNotifications, 10000)
+      return () => clearInterval(interval)
+    }
+  }, [address, fetchNotifications])
 
   const handleNotificationClick = async (notificationId: string) => {
     try {

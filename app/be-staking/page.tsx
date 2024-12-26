@@ -11,6 +11,7 @@ import TransactionRejectedMessage from '@/components/TransactionRejectedMessage'
 import { motion } from 'framer-motion'
 import Sidebar from '@/components/Sidebar'
 import SocialMediaLinks from '@/components/SocialMediaLinks'
+import TransactionStatus from '@/components/TransactionStatus'
 
 const stakingPeriods = [
   { days: 1/1440, apr: 1000 }, // 1 minute for testing (1000% APR)
@@ -32,19 +33,11 @@ export default function BEStaking() {
   const [isStaking, setIsStaking] = useState(false)
   const [stakeError, setStakeError] = useState('')
   const [transactionPending, setTransactionPending] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [isCompleted, setIsCompleted] = useState(false)
+  const [showCornerNotification, setShowCornerNotification] = useState(false)
 
-  useEffect(() => {
-    if (isConnected && address) {
-      fetchBalance()
-      fetchTotalStaked()
-    }
-  }, [isConnected, address])
-
-  useEffect(() => {
-    calculateExpectedEarnings()
-  }, [stakeAmount, selectedPeriod])
-
-  const fetchBalance = async () => {
+  const fetchBalance = useCallback(async () => {
     try {
       const provider = new ethers.JsonRpcProvider('https://polygon-rpc.com')
       const contract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, provider)
@@ -53,9 +46,9 @@ export default function BEStaking() {
     } catch (error) {
       console.error('Error fetching balance:', error)
     }
-  }
+  }, [address])
 
-  const fetchTotalStaked = async () => {
+  const fetchTotalStaked = useCallback(async () => {
     try {
       const provider = new ethers.JsonRpcProvider('https://polygon-rpc.com')
       const contract = new ethers.Contract(BE_STAKING_ADDRESS, BE_STAKING_ABI, provider)
@@ -65,9 +58,9 @@ export default function BEStaking() {
     } catch (error) {
       console.error('Error fetching total staked:', error)
     }
-  }
+  }, [address])
 
-  const calculateExpectedEarnings = () => {
+  const calculateExpectedEarnings = useCallback(() => {
     if (!stakeAmount) {
       setExpectedEarnings('0')
       return
@@ -79,7 +72,18 @@ export default function BEStaking() {
     
     const earnings = (amount * apr * days) / 365
     setExpectedEarnings(earnings.toFixed(3))
-  }
+  }, [stakeAmount, selectedPeriod])
+
+  useEffect(() => {
+    if (isConnected && address) {
+      fetchBalance()
+      fetchTotalStaked()
+    }
+  }, [isConnected, address, fetchBalance, fetchTotalStaked])
+
+  useEffect(() => {
+    calculateExpectedEarnings()
+  }, [stakeAmount, selectedPeriod, calculateExpectedEarnings])
 
   const handleStakeAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -98,6 +102,7 @@ export default function BEStaking() {
     }
 
     setIsStaking(true)
+    setIsProcessing(true)
     setTransactionPending(true)
     try {
       const provider = new ethers.BrowserProvider(window.ethereum)
@@ -116,12 +121,20 @@ export default function BEStaking() {
       const tx2 = await staking.stake(amount, periodIndex)
       await tx2.wait()
 
+      setIsProcessing(false)
+      setIsCompleted(true)
+      setTimeout(() => {
+        setIsCompleted(false)
+        setShowCornerNotification(true)
+      }, 3000)
+
       // Refresh data
       fetchBalance()
       fetchTotalStaked()
       setStakeAmount('')
     } catch (error: any) {
       console.error('Staking error:', error)
+      setIsProcessing(false)
       if (error.code === 4001 || (error.info && error.info.error && error.info.error.code === 4001)) {
         setShowRejected(true)
       } else {
@@ -267,6 +280,25 @@ export default function BEStaking() {
           {/* Transaction Rejected Message */}
           {showRejected && (
             <TransactionRejectedMessage onClose={() => setShowRejected(false)} />
+          )}
+          {(isProcessing || isCompleted) && !showCornerNotification && (
+            <TransactionStatus
+              isProcessing={isProcessing}
+              isCompleted={isCompleted}
+              onClose={() => {
+                setIsProcessing(false)
+                setIsCompleted(false)
+                setShowCornerNotification(true)
+              }}
+            />
+          )}
+          {showCornerNotification && (
+            <TransactionStatus
+              isProcessing={false}
+              isCompleted={true}
+              onClose={() => setShowCornerNotification(false)}
+              isCornerNotification={true}
+            />
           )}
         </div>
       </main>

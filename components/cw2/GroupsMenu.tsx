@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Search, Plus, Users, Upload, AlertCircle } from 'lucide-react'
 import CreateGroupModal from './CreateGroupModal'
 import MembersListModal from './MembersListModal'
@@ -34,14 +34,7 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup }: GroupsMenuP
   const [uploading, setUploading] = useState(false)
   const [exceptionMessage, setExceptionMessage] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (address) {
-      fetchGroups()
-      fetchBalance()
-    }
-  }, [address])
-
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     try {
       const response = await fetch(`/api/groups?userAddress=${address}`)
       if (!response.ok) {
@@ -53,16 +46,23 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup }: GroupsMenuP
       console.error('Failed to fetch groups:', err)
       setError('Failed to load groups. Please try again.')
     }
-  }
+  }, [address])
 
-  const fetchBalance = async () => {
+  const fetchBalance = useCallback(async () => {
     try {
       const userBalance = await getBalance(address!)
       setBalance(userBalance)
     } catch (err) {
       console.error('Failed to fetch balance:', err)
     }
-  }
+  }, [address])
+
+  useEffect(() => {
+    if (address) {
+      fetchGroups()
+      fetchBalance()
+    }
+  }, [address, fetchGroups, fetchBalance])
 
   const handleCreateGroup = async (name: string, members: string[]) => {
     setError(null)

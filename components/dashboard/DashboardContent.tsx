@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
 import ENSName from './ENSName'
 import TransactionDetails from './TransactionDetails'
@@ -44,7 +44,7 @@ export default function DashboardContent({ address }: DashboardContentProps) {
     }
   }
 
-  const saveSearchDetails = async (
+  const saveSearchDetails = useCallback(async (
     searchedAddress: string, 
     resolvedAddr: string,
     totalHoldingsETH: number,
@@ -59,7 +59,7 @@ export default function DashboardContent({ address }: DashboardContentProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          connectedAddress: connectedAddress || CEO_ADDRESS, // Use connected address or CEO address
+          connectedAddress: connectedAddress || CEO_ADDRESS,
           searchedAddress,
           resolvedAddress: resolvedAddr,
           totalHoldingsETH,
@@ -75,7 +75,7 @@ export default function DashboardContent({ address }: DashboardContentProps) {
     } catch (error) {
       console.error('Error saving search details:', error)
     }
-  }
+  }, [connectedAddress])
 
   useEffect(() => {
     const resolveAddressOrENS = async () => {
@@ -99,13 +99,11 @@ export default function DashboardContent({ address }: DashboardContentProps) {
         let resolvedENS: string | null = null
 
         if (address.endsWith('.eth')) {
-          // Input is an ENS name
           resolvedAddr = await provider.resolveName(address)
           if (resolvedAddr) {
             resolvedENS = address
           }
         } else if (ethers.isAddress(address)) {
-          // Input is an Ethereum address
           resolvedAddr = address
           resolvedENS = await provider.lookupAddress(address)
         }
@@ -115,22 +113,17 @@ export default function DashboardContent({ address }: DashboardContentProps) {
           setEnsName(resolvedENS)
           setIsValidInput(true)
 
-          // Calculate total holdings in ETH
           const ethBalance = await provider.getBalance(resolvedAddr)
           const ethHoldings = parseFloat(ethers.formatEther(ethBalance))
 
-          // Fetch current ETH price
           const ethPriceResponse = await fetch('/api/eth-price')
           const ethPriceData = await ethPriceResponse.json()
-          const ethPrice = ethPriceData.price || 2000 // Fallback price
+          const ethPrice = ethPriceData.price || 2000
 
-          // Calculate total holdings in USD
           const totalHoldingsUSD = ethHoldings * ethPrice
 
-          // Calculate gas spent
           const gasSpent = await calculateGasSpent(resolvedAddr, provider)
 
-          // Save search details
           await saveSearchDetails(
             address,
             resolvedAddr,
@@ -153,7 +146,7 @@ export default function DashboardContent({ address }: DashboardContentProps) {
     }
 
     resolveAddressOrENS()
-  }, [address, connectedAddress])
+  }, [address, connectedAddress, saveSearchDetails])
 
   if (!address) {
     return (

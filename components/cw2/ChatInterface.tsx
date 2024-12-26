@@ -52,14 +52,6 @@ export default function ChatInterface({ selectedContact, selectedGroup, isGroup 
   const selectedEntity = isGroup ? selectedGroup : selectedContact
   const selectedAddress = isGroup ? selectedGroup?.groupName : selectedContact?.contactAddress
 
-  useEffect(() => {
-    if (selectedEntity && address) {
-      fetchMessages()
-      const interval = setInterval(fetchMessages, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [selectedEntity, address])
-
   const fetchMessages = async () => {
     if (!selectedEntity || !address) return
 
@@ -89,6 +81,14 @@ export default function ChatInterface({ selectedContact, selectedGroup, isGroup 
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (selectedEntity && address) {
+      fetchMessages()
+      const interval = setInterval(fetchMessages, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [selectedEntity, address, fetchMessages, selectedAddress, isGroup])
 
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedEntity || !address) return

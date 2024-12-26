@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
 import { Wallet, AlertCircle, RefreshCw, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 
@@ -33,7 +33,7 @@ export default function TotalHoldings({ address }: { address: string }) {
   const [error, setError] = useState<string | null>(null)
   const [showTokens, setShowTokens] = useState(false)
 
-  const fetchHoldings = async (retryCount = 0) => {
+  const fetchHoldings = useCallback(async (retryCount = 0) => {
     setIsLoading(true)
     setError(null)
     const apiKey = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY
@@ -93,7 +93,6 @@ export default function TotalHoldings({ address }: { address: string }) {
         }
       }
 
-
       // Filter out zero balances
       const tokens = Array.from(tokenHoldings.values()).filter(token => parseFloat(token.balance) > 0)
 
@@ -127,11 +126,11 @@ export default function TotalHoldings({ address }: { address: string }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [address])
 
   useEffect(() => {
     fetchHoldings()
-  }, [address])
+  }, [address, fetchHoldings])
 
   if (isLoading) {
     return (
