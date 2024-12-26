@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react'
 import { ethers } from 'ethers'
-import Web3Modal from 'web3modal'
+// import Web3Modal from 'web3modal' // Removed
 import CoinbaseWalletSDK from '@coinbase/wallet-sdk'
 
 interface WalletContextType {
@@ -41,14 +41,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [showWalletModal, setShowWalletModal] = useState(false)
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false)
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
-  const web3ModalRef = useRef<Web3Modal | null>(null)
+  // const web3ModalRef = useRef<Web3Modal | null>(null) // Removed
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      web3ModalRef.current = new Web3Modal({
-        cacheProvider: true,
-        providerOptions,
-      })
+      // Web3Modal initialization removed
     }
 
     // Check for saved connection on initial load
@@ -118,73 +115,59 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const connectWallet = useCallback(async (providerType: string, isAutoConnect: boolean = false) => {
     try {
-      if (!web3ModalRef.current) {
-        throw new Error("Web3Modal not initialized.")
-      }
-
-      let provider
+      let provider;
       switch (providerType) {
         case 'metamask':
           if (typeof window !== 'undefined' && window.ethereum) {
-            provider = window.ethereum
+            provider = window.ethereum;
           }
-          break
-        case 'okx':
-          if (typeof window !== 'undefined' && window.okxwallet) {
-            provider = window.okxwallet
-          }
-          break
-        case 'trust':
-          if (typeof window !== 'undefined' && window.trustwallet) {
-            provider = window.trustwallet
-          }
-          break
+          break;
+        case 'coinbase':
+          // You may need to implement Coinbase Wallet connection separately
+          throw new Error("Coinbase Wallet connection not implemented");
         default:
-          provider = await web3ModalRef.current.connect()
+          throw new Error("Unsupported wallet type");
       }
 
       if (!provider) {
-        throw new Error("No provider available")
+        throw new Error("No provider available");
       }
 
-      const ethersProvider = new ethers.BrowserProvider(provider)
-      const signer = await ethersProvider.getSigner()
-      const address = await signer.getAddress()
+      const ethersProvider = new ethers.BrowserProvider(provider);
+      const signer = await ethersProvider.getSigner();
+      const address = await signer.getAddress();
       
-      setSigner(signer)
-      setAddress(address)
-      setIsConnected(true)
-      setShowWalletModal(false)
+      setSigner(signer);
+      setAddress(address);
+      setIsConnected(true);
+      setShowWalletModal(false);
       if (!isAutoConnect) {
-        setShowSuccessAnimation(true)
+        setShowSuccessAnimation(true);
       }
       
       if (provider.on) {
-        provider.on('accountsChanged', handleAccountsChanged)
-        provider.on('chainChanged', handleChainChanged)
+        provider.on('accountsChanged', handleAccountsChanged);
+        provider.on('chainChanged', handleChainChanged);
       }
 
       // Check network after successful connection
-      await checkNetwork(provider)
+      await checkNetwork(provider);
 
       // Save connection info to local storage
-      localStorage.setItem('walletConnection', JSON.stringify({ providerType, address }))
+      localStorage.setItem('walletConnection', JSON.stringify({ providerType, address }));
 
     } catch (error: any) {
-      console.error("Failed to connect:", error)
+      console.error("Failed to connect:", error);
       if (error.message.includes("User rejected the request")) {
-        console.log("User rejected the wallet connection request")
+        console.log("User rejected the wallet connection request");
       } else {
-        disconnectWallet()
+        disconnectWallet();
       }
-      throw error
+      throw error;
     }
-  }, [checkNetwork])
+  }, [checkNetwork]);
 
   const disconnectWallet = useCallback(() => {
-    if (web3ModalRef.current) {
-      web3ModalRef.current.clearCachedProvider()
-    }
     setSigner(null)
     setAddress(null)
     setIsConnected(false)
