@@ -4,10 +4,6 @@ import { useState } from 'react'
 import { X, Upload, Users } from 'lucide-react'
 import Image from 'next/image'
 
-interface Member {
-  address: string;
-}
-
 interface MembersListModalProps {
   isOpen: boolean;
   onClose: () => void;
