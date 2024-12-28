@@ -1,8 +1,7 @@
 'use client'
 
-import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react'
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
-// import Web3Modal from 'web3modal' // Removed
 import CoinbaseWalletSDK from '@coinbase/wallet-sdk'
 
 interface WalletContextType {
@@ -41,49 +40,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [showWalletModal, setShowWalletModal] = useState(false)
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false)
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
-  // const web3ModalRef = useRef<Web3Modal | null>(null) // Removed
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Web3Modal initialization removed
-    }
-
-    // Check for saved connection on initial load
-    const savedConnection = localStorage.getItem('walletConnection')
-    if (savedConnection) {
-      const { providerType } = JSON.parse(savedConnection)
-      connectWallet(providerType, true)
-    }
-
-    return () => {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        window.ethereum.removeAllListeners('accountsChanged')
-        window.ethereum.removeAllListeners('chainChanged')
-      }
-    }
-  }, [])
-
-  const verifyCaptcha = useCallback(async (token: string): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/verify-captcha', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to verify CAPTCHA')
-      }
-
-      const data = await response.json()
-      return data.success
-    } catch (error) {
-      console.error('CAPTCHA verification failed:', error)
-      return false
-    }
-  }, [])
 
   const checkNetwork = useCallback(async (provider: any) => {
     if (provider.request) {
@@ -94,78 +50,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     return false
   }, [])
-
-  const switchNetwork = useCallback(async () => {
-    if (typeof window !== 'undefined' && window.ethereum) {
-      try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: ETH_MAINNET_CHAIN_ID }],
-        })
-        setIsCorrectNetwork(true)
-      } catch (error: any) {
-        if (error.code === 4902) {
-          throw new Error("This wallet doesn't have Ethereum Mainnet added. Please add it manually and try again.")
-        } else {
-          throw new Error("Failed to switch to the Ethereum Mainnet.")
-        }
-      }
-    }
-  }, [])
-
-  const connectWallet = useCallback(async (providerType: string, isAutoConnect: boolean = false) => {
-    try {
-      let provider;
-      switch (providerType) {
-        case 'metamask':
-          if (typeof window !== 'undefined' && window.ethereum) {
-            provider = window.ethereum;
-          }
-          break;
-        case 'coinbase':
-          // You may need to implement Coinbase Wallet connection separately
-          throw new Error("Coinbase Wallet connection not implemented");
-        default:
-          throw new Error("Unsupported wallet type");
-      }
-
-      if (!provider) {
-        throw new Error("No provider available");
-      }
-
-      const ethersProvider = new ethers.BrowserProvider(provider);
-      const signer = await ethersProvider.getSigner();
-      const address = await signer.getAddress();
-      
-      setSigner(signer);
-      setAddress(address);
-      setIsConnected(true);
-      setShowWalletModal(false);
-      if (!isAutoConnect) {
-        setShowSuccessAnimation(true);
-      }
-      
-      if (provider.on) {
-        provider.on('accountsChanged', handleAccountsChanged);
-        provider.on('chainChanged', handleChainChanged);
-      }
-
-      // Check network after successful connection
-      await checkNetwork(provider);
-
-      // Save connection info to local storage
-      localStorage.setItem('walletConnection', JSON.stringify({ providerType, address }));
-
-    } catch (error: any) {
-      console.error("Failed to connect:", error);
-      if (error.message.includes("User rejected the request")) {
-        console.log("User rejected the wallet connection request");
-      } else {
-        disconnectWallet();
-      }
-      throw error;
-    }
-  }, [checkNetwork]);
 
   const disconnectWallet = useCallback(() => {
     setSigner(null)
@@ -202,6 +86,152 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       await checkNetwork(window.ethereum)
     }
   }, [checkNetwork])
+
+  const connectWallet = useCallback(async (providerType: string, isAutoConnect: boolean = false) => {
+    try {
+      let provider;
+      switch (providerType) {
+        case 'metamask':
+          if (typeof window !== 'undefined' && window.ethereum) {
+            // Check if MetaMask is installed and accessible
+            if (window.ethereum.isMetaMask) {
+              provider = window.ethereum;
+            } else {
+              throw new Error("MetaMask is not installed or not accessible");
+            }
+          } else {
+            throw new Error("Ethereum object not found. Please install MetaMask.");
+          }
+          break;
+        case 'coinbase':
+          // Implement Coinbase Wallet connection logic here
+          throw new Error("Coinbase Wallet connection not implemented");
+        default:
+          throw new Error("Unsupported wallet type");
+      }
+
+      if (!provider) {
+        throw new Error("No provider available");
+      }
+
+      // Ensure that the provider is ready before proceeding
+      if (typeof provider.request !== 'function') {
+        throw new Error("Provider is not ready or doesn't have expected methods");
+      }
+
+      const ethersProvider = new ethers.BrowserProvider(provider);
+      const signer = await ethersProvider.getSigner();
+      const address = await signer.getAddress();
+      
+      setSigner(signer);
+      setAddress(address);
+      setIsConnected(true);
+      setShowWalletModal(false);
+      if (!isAutoConnect) {
+        setShowSuccessAnimation(true);
+      }
+      
+      if (provider.on) {
+        provider.on('accountsChanged', handleAccountsChanged);
+        provider.on('chainChanged', handleChainChanged);
+      }
+
+      // Check network after successful connection
+      await checkNetwork(provider);
+
+      // Save connection info to local storage
+      localStorage.setItem('walletConnection', JSON.stringify({ providerType, address }));
+
+    } catch (error: any) {
+      console.error("Failed to connect:", error);
+      if (error.message.includes("User rejected the request")) {
+        console.log("User rejected the wallet connection request");
+      } else {
+        disconnectWallet();
+      }
+      throw error;
+    }
+  }, [checkNetwork])
+
+  const isWalletReady = useCallback(async (provider: any): Promise<boolean> => {
+    if (!provider) return false;
+    
+    try {
+      await provider.request({ method: 'eth_accounts' });
+      return true;
+    } catch (error) {
+      console.error("Wallet is not ready:", error);
+      return false;
+    }
+  }, []);
+
+  useEffect(() => {
+    const initializeWallet = async () => {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        const isReady = await isWalletReady(window.ethereum);
+        if (isReady) {
+          const savedConnection = localStorage.getItem('walletConnection');
+          if (savedConnection) {
+            const { providerType } = JSON.parse(savedConnection);
+            connectWallet(providerType, true);
+          }
+        } else {
+          console.log("Wallet is not ready yet. Retrying in 1 second...");
+          setTimeout(initializeWallet, 1000);
+        }
+      }
+    };
+
+    initializeWallet();
+
+    return () => {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        window.ethereum.removeAllListeners('accountsChanged')
+        window.ethereum.removeAllListeners('chainChanged')
+      }
+    }
+  }, [connectWallet, isWalletReady])
+
+  const verifyCaptcha = useCallback(async (token: string): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/verify-captcha', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to verify CAPTCHA')
+      }
+
+      const data = await response.json()
+      return data.success
+    } catch (error) {
+      console.error('CAPTCHA verification failed:', error)
+      return false
+    }
+  }, [])
+
+
+  const switchNetwork = useCallback(async () => {
+    if (typeof window !== 'undefined' && window.ethereum) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: ETH_MAINNET_CHAIN_ID }],
+        })
+        setIsCorrectNetwork(true)
+      } catch (error: any) {
+        if (error.code === 4902) {
+          throw new Error("This wallet doesn't have Ethereum Mainnet added. Please add it manually and try again.")
+        } else {
+          throw new Error("Failed to switch to the Ethereum Mainnet.")
+        }
+      }
+    }
+  }, [])
 
   const contextValue = {
     signer,

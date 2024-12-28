@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X, Home, LayoutDashboard, Coins, Binary, Bot, ArrowLeftRight, BarChart2, MessageCircle, Network, ImageIcon, FishIcon as Whale, FuelIcon as GasPump } from 'lucide-react'
@@ -25,7 +25,6 @@ const allSidebarItems = [
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const { address } = useWallet()
   const pathname = usePathname()
 
@@ -33,19 +32,18 @@ export default function Sidebar() {
 
   const sidebarItems = allSidebarItems.filter(item => !item.ceoOnly || isCEO)
 
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      setMousePosition({ x: event.clientX, y: event.clientY })
-      if (event.clientX < 50) {
-        setIsOpen(true)
-      } else if (event.clientX > 250 && isOpen) {
-        setIsOpen(false)
-      }
+  const handleMouseMove = useCallback((event: MouseEvent) => {
+    if (event.clientX < 50) {
+      setIsOpen(true)
+    } else if (event.clientX > 250 && isOpen) {
+      setIsOpen(false)
     }
+  }, [isOpen])
 
+  useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove)
     return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [isOpen])
+  }, [handleMouseMove])
 
   return (
     <>

@@ -69,12 +69,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable} ${spaceGrotesk.variable} ${robotoMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} ${poppins.variable} ${robotoMono.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/blocke-logo.png" sizes="any" />
       </head>
-      <body className="font-sans antialiased">
+      <body className={`${spaceGrotesk.variable} font-space-grotesk antialiased`}>
         <WalletProvider>
           <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-50">
             <NavbarContent />

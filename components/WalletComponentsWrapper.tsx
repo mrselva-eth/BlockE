@@ -25,9 +25,11 @@ export default function WalletComponentsWrapper() {
   }, [disconnectWallet])
 
   const resetInactivityTimer = useCallback(() => {
-    setLastActiveTime(Date.now())
-    setShowDisconnectAlert(false)
-  }, [])
+    if (showDisconnectAlert) {
+      setLastActiveTime(Date.now())
+      setShowDisconnectAlert(false)
+    }
+  }, [showDisconnectAlert])
 
   const handleToggleAutoDisconnect = useCallback((isEnabled: boolean) => {
     setIsAutoDisconnectEnabled(isEnabled)
@@ -82,25 +84,27 @@ export default function WalletComponentsWrapper() {
 
   useEffect(() => {
     const handleActivity = () => {
-      resetInactivityTimer()
+      if (showDisconnectAlert) {
+        resetInactivityTimer()
+      }
     }
 
     window.addEventListener('mousemove', handleActivity)
     window.addEventListener('keydown', handleActivity)
     window.addEventListener('scroll', handleActivity)
     window.addEventListener('click', handleActivity)
-    window.addEventListener('touchstart', handleActivity) // Added touchstart event listener
-    window.addEventListener('touchmove', handleActivity) // Added touchmove event listener
+    window.addEventListener('touchstart', handleActivity)
+    window.addEventListener('touchmove', handleActivity)
 
     return () => {
       window.removeEventListener('mousemove', handleActivity)
       window.removeEventListener('keydown', handleActivity)
       window.removeEventListener('scroll', handleActivity)
       window.removeEventListener('click', handleActivity)
-      window.removeEventListener('touchstart', handleActivity) // Added touchstart event listener removal
-      window.removeEventListener('touchmove', handleActivity) // Added touchmove event listener removal
+      window.removeEventListener('touchstart', handleActivity)
+      window.removeEventListener('touchmove', handleActivity)
     }
-  }, [resetInactivityTimer])
+  }, [showDisconnectAlert, resetInactivityTimer])
 
   return (
     <>
