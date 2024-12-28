@@ -18,7 +18,7 @@ export default function CW2Header({ showSidebar, setShowSidebar, activeMenu, han
   }, [])
 
   return (
-    <div className="flex justify-between items-center p-4 border-b border-black bg-gradient-to-r from-purple-400/20 via-pink-300/20 to-purple-400/20 backdrop-blur-sm">
+    <div className="flex justify-between items-center p-4 border-b border-black bg-[#FAECFA] backdrop-blur-sm">
       <div className="flex items-center gap-4">
         <button
           onClick={() => setShowSidebar(!showSidebar)}

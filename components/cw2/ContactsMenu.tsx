@@ -12,9 +12,10 @@ interface Contact {
 interface ContactsMenuProps {
   onSelectContact: (contact: Contact) => void;
   selectedContact: Contact | null;
+  onShowAddContact: () => void; // Add this prop
 }
 
-export default function ContactsMenu({ onSelectContact, selectedContact }: ContactsMenuProps) {
+export default function ContactsMenu({ onSelectContact, selectedContact, onShowAddContact }: ContactsMenuProps) {
   const { address } = useWallet()
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddContact, setShowAddContact] = useState(false)
@@ -82,7 +83,7 @@ export default function ContactsMenu({ onSelectContact, selectedContact }: Conta
   )
 
   return (
-    <div className="p-4">
+    <div className="p-4 bg-[#FAECFA]">
       <div className="flex items-center mb-4">
         <div className="relative flex-grow">
           <input
@@ -96,12 +97,12 @@ export default function ContactsMenu({ onSelectContact, selectedContact }: Conta
         </div>
         <button
           className="ml-2 p-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors"
-          onClick={() => setShowAddContact(true)}
+          onClick={onShowAddContact}
         >
           <Plus size={20} />
         </button>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2 max-h-[calc(100vh-16rem)] overflow-y-auto contacts-scrollbar">
         {filteredContacts.map((contact) => (
           <div
             key={contact._id}
@@ -113,19 +114,29 @@ export default function ContactsMenu({ onSelectContact, selectedContact }: Conta
             onClick={() => onSelectContact(contact)}
           >
             <p className="font-semibold">{contact.contactName}</p>
-            <p className="text-sm text-gray-600">{truncateAddress(contact.contactAddress)}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">{truncateAddress(contact.contactAddress)}</p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigator.clipboard.writeText(contact.contactAddress);
+                  // Show temporary success message
+                  const target = e.currentTarget;
+                  target.textContent = 'Copied!';
+                  setTimeout(() => {
+                    target.textContent = 'Copy';
+                  }, 2000);
+                }}
+                className="text-xs text-purple-600 hover:text-purple-700 px-2 py-1 rounded-md hover:bg-purple-50"
+              >
+                Copy
+              </button>
+            </div>
           </div>
         ))}
       </div>
       {error && (
         <p className="text-red-500 mt-2 text-sm">{error}</p>
-      )}
-      {showAddContact && (
-        <AddContactModal 
-          onClose={() => setShowAddContact(false)} 
-          onAdd={handleAddContact} 
-          isFullScreen={true}
-        />
       )}
     </div>
   )

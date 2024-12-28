@@ -736,3 +736,533 @@ body, html {
 #__next {
   min-height: 100vh;
 }
+@layer base {
+  body {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-space-grotesk;
+  }
+}
+
+.chat-text {
+  @apply font-roboto-mono;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #4F46E5, #9333EA);
+  border-radius: 5px;
+  border: 2px solid #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #9333EA, #4F46E5);
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4F46E5 #f1f1f1;
+}
+
+/* Custom scrollbar for chat messages */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #FAECFA;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #f5e5f5;
+}
+
+/* Custom scrollbar for contacts and groups */
+.contacts-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.contacts-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.contacts-scrollbar::-webkit-scrollbar-thumb {
+  background: #e5e5e5;
+  border-radius: 3px;
+}
+
+.contacts-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #d4d4d4;
+}
+
+/* Firefox scrollbar styles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #FAECFA transparent;
+}
+
+.contacts-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e5e5 transparent;
+}
+
+
+/* Hide Next.js development indicators */
+[data-nextjs-route-announcer],
+[data-next-route-announcer],
+#__next-route-announcer__,
+[data-next-development-indicator] {
+  display: none !important;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-100vh) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes rotateCircle {
+  0% { transform: rotate(180deg); }
+  33% { transform: rotate(0deg); }
+  66% { transform: rotate(90deg); }
+  100% { transform: rotate(180deg); }
+}
+
+@keyframes scale-bounce {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Wallet Connect Button */
+.wallet-connect-btn {
+  background-color: #444141;
+  border-radius: 50px;
+  color: #fff;
+  cursor: pointer;
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border: none;
+  transition: background-image 0.3s ease;
+}
+
+.wallet-connect-btn:hover {
+  background-image: linear-gradient(90deg, #53cbef 0%, #dcc66c 50%, #ffa3b6 75%, #53cbef 100%);
+  animation: slidernbw 5s linear infinite;
+  color: #000;
+}
+
+@keyframes slidernbw {
+  to {
+    background-position: 20vw;
+  }
+}
+
+/* BlockE User ID Button */
+.blocke-user-id-btn {
+  font-size: 0.875rem;
+  padding: 0.4rem 0.8rem;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
+  font-weight: bold;
+  min-width: 120px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5em;
+  border: none;
+  background-color: #000;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 2px 2px 3px #000000b4;
+}
+
+.blocke-user-id-container {
+  position: relative;
+  padding: 1px; /* Reduced from 2px */
+  background: linear-gradient(90deg, #03a9f4, #f441a5);
+  border-radius: 0.6em;
+  transition: all 0.4s ease;
+}
+
+.blocke-user-id-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border-radius: 0.6em;
+  z-index: -10;
+  filter: blur(0);
+  transition: filter 0.4s ease;
+}
+
+.blocke-user-id-container:hover::before {
+  background: linear-gradient(90deg, #03a9f4, #f441a5);
+  filter: blur(0.4em);
+}
+
+.blocke-user-id-container:active::before {
+  filter: blur(0.1em);
+}
+
+.animate-scale-bounce {
+  animation: scale-bounce 1s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+/* Add styles for the mint button animation */
+.btn-23 {
+  font-size: 0.875rem;
+  padding: 0.4rem 0.8rem;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
+  font-weight: bold;
+  min-width: 120px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: button;
+  background-color: #000;
+  background-image: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 99rem;
+  border: 2px solid transparent;
+  overflow: hidden;
+  position: relative;
+}
+
+.btn-23:hover {
+  background-color: #fff;
+  color: #000;
+  border: 2px solid #000;
+}
+
+.btn-23 span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  inset: 0;
+  place-items: center;
+  position: absolute;
+  transition: opacity 0.2s ease;
+}
+
+.btn-23::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-23:hover::before {
+  opacity: 1;
+}
+
+.btn-23:hover span {
+  color: #000;
+}
+
+.btn-23 *,
+.btn-23 :after,
+.btn-23 :before,
+.btn-23:after,
+.btn-23:before {
+  border: 0 solid;
+  box-sizing: border-box;
+}
+
+.btn-23 .marquee {
+  --spacing: 1em;
+  --start: 0em;
+  --end: 3em;
+  animation: marquee 1s linear infinite;
+  animation-play-state: paused;
+  opacity: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: max-content;
+  text-shadow: none; /* Remove text shadow */
+}
+
+.btn-23:hover .marquee {
+  animation-play-state: running;
+  opacity: 1;
+}
+
+.btn-23:hover .text {
+  opacity: 0;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.btn-23:disabled {
+  cursor: default;
+}
+
+.btn-23:-moz-focusring {
+  outline: auto;
+}
+
+.btn-23 svg {
+  display: block;
+  vertical-align: middle;
+}
+
+.btn-23 [hidden] {
+  display: none;
+}
+
+/* BlockE UID Button */
+.Btn-Container {
+  display: flex;
+  width: 170px;
+  height: 36px; /* Match Mint BE button height */
+  background: linear-gradient(90deg, #4F46E5, #9333EA); /* BlockE brand colors */
+  border-radius: 99rem; /* Match Mint BE button radius */
+  box-shadow: 0px 5px 10px rgba(79, 70, 229, 0.2);
+  justify-content: space-between;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto;
+  font-weight: 700;
+}
+
+.icon-Container {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  margin: 2px;
+}
+
+.text {
+  width: calc(170px - 36px);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
+}
+
+.icon-Container svg {
+  transition-duration: 1.5s;
+}
+
+.Btn-Container:hover {
+  background: linear-gradient(90deg, #9333EA, #4F46E5);
+}
+
+.Btn-Container:hover .icon-Container svg {
+  transition-duration: 1.5s;
+  animation: arrow 1s linear infinite;
+}
+
+@keyframes arrow {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(5px);
+  }
+}
+
+/* Transaction Rejected Message styles */
+.transaction-rejected-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.transaction-rejected-content {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  max-width: 24rem;
+  width: 100%;
+  margin: 0 1rem;
+  text-align: center;
+  position: relative;
+}
+
+.transaction-rejected-close {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.transaction-rejected-close:hover {
+  color: #374151;
+}
+
+.transaction-rejected-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #dc2626;
+}
+
+.transaction-rejected-message {
+  margin-bottom: 1.5rem;
+}
+
+.transaction-rejected-button {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.transaction-rejected-button:hover {
+  background-color: #2563eb;
+}
+
+@keyframes wave {
+  0% {
+    transform: translateX(0) translateZ(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(-25%) translateZ(0) scaleY(0.55);
+  }
+  100% {
+    transform: translateX(-50%) translateZ(0) scaleY(1);
+  }
+}
+
+.animate-wave {
+  animation: wave 2.5s linear infinite;
+}
+
+@keyframes water-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-1px, 0) rotate(-1deg); }
+  20%, 40%, 60%, 80% { transform: translate(1px, 0) rotate(1deg); }
+}
+
+.animate-water-shake {
+  animation: water-shake 0.5s infinite;
+}
+
+/* BE Token Balance styles */
+.be-token-balance {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-poppins);
+  font-weight: 700;
+  color: #4F46E5;
+  transition: all 0.3s ease;
+}
+
+.be-token-balance:hover {
+  transform: translateY(-2px);
+}
+
+.be-token-balance img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.be-token-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.be-token-balance:hover .be-token-tooltip {
+  opacity: 1;
+}
+
+/* Network Switch Button styles */
+.network-switch-btn {
+  font-family: var(--font-poppins);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.network-switch-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+

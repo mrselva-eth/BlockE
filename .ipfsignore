@@ -1,6 +1,6 @@
-echo "node_modules
+node_modules
 .next
 .env*
 .git
 .gitignore
-README.md" > .ipfsignore
+README.md

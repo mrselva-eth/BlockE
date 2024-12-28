@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Search, Plus, Users, Upload, AlertCircle } from 'lucide-react'
-import CreateGroupModal from './CreateGroupModal'
 import MembersListModal from './MembersListModal'
 import { useWallet } from '@/contexts/WalletContext'
 import { createGroup as createGroupOnChain, getBalance } from '@/utils/cw2ContractInteractions'
@@ -21,12 +20,13 @@ interface Group {
 interface GroupsMenuProps {
   onSelectGroup: (group: Group) => void;
   selectedGroup: Group | null;
+  onShowCreateGroup: () => void;
+  onShowMembersList: (group: Group) => void;  // Add this line
 }
 
-export default function GroupsMenu({ onSelectGroup, selectedGroup }: GroupsMenuProps) {
+export default function GroupsMenu({ onSelectGroup, selectedGroup, onShowCreateGroup, onShowMembersList }: GroupsMenuProps) {
   const { address } = useWallet()
   const [searchTerm, setSearchTerm] = useState('')
-  const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [showMembersModal, setShowMembersModal] = useState(false)
   const [selectedGroupForMembers, setSelectedGroupForMembers] = useState<Group | null>(null)
   const [groups, setGroups] = useState<Group[]>([])
@@ -91,7 +91,6 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup }: GroupsMenuP
         throw new Error('Failed to create group')
       }
 
-      setShowCreateGroup(false)
       await fetchGroups()
       await fetchBalance()
     } catch (err: any) {
@@ -106,7 +105,7 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup }: GroupsMenuP
       setExceptionMessage("Only group creators can view member details")
     } else {
       setSelectedGroupForMembers(group)
-      setShowMembersModal(true)
+      onShowMembersList(group)  // Add this prop to the component
     }
   }
 
@@ -152,7 +151,7 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup }: GroupsMenuP
   )
 
   return (
-    <div className="p-4">
+    <div className="p-4 bg-[#FAECFA]">
       <div className="flex items-center mb-4">
         <div className="relative flex-grow">
           <input
@@ -166,7 +165,7 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup }: GroupsMenuP
         </div>
         <button
           className="ml-2 p-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors"
-          onClick={() => setShowCreateGroup(true)}
+          onClick={onShowCreateGroup}
         >
           <Plus size={20} />
         </button>
@@ -174,7 +173,7 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup }: GroupsMenuP
       <div className="mb-4">
         <p className="text-sm text-gray-600">Available Balance: {balance} BE</p>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2 max-h-[calc(100vh-16rem)] overflow-y-auto contacts-scrollbar">
         {filteredGroups.map((group) => (
           <div
             key={group._id}
@@ -222,24 +221,6 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup }: GroupsMenuP
         <ExceptionMessage 
           message={exceptionMessage} 
           onClose={() => setExceptionMessage(null)} 
-        />
-      )}
-      {showCreateGroup && (
-        <CreateGroupModal onClose={() => setShowCreateGroup(false)} onCreate={handleCreateGroup} />
-      )}
-      {selectedGroupForMembers && showMembersModal && (
-        <MembersListModal
-          isOpen={showMembersModal}
-          onClose={() => {
-            setShowMembersModal(false)
-            setSelectedGroupForMembers(null)
-          }}
-          groupName={selectedGroupForMembers.groupName}
-          members={selectedGroupForMembers.members}
-          creatorAddress={selectedGroupForMembers.creatorAddress}
-          groupLogo={selectedGroupForMembers.groupLogo}
-          onLogoUpload={handleLogoUpload}
-          isCreator={selectedGroupForMembers.creatorAddress.toLowerCase() === address?.toLowerCase()}
         />
       )}
     </div>

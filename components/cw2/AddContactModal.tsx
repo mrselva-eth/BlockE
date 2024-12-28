@@ -19,7 +19,7 @@ export default function AddContactModal({ onClose, onAdd, isFullScreen = false }
   if (isFullScreen) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-        <div className="bg-white rounded-xl p-6 w-96 max-w-[90vw] mx-4 shadow-xl">
+        <div className="bg-[#FAECFA] rounded-xl p-6 w-full max-w-md mx-4 shadow-xl relative">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Add New Contact</h2>
             <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors">

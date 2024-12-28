@@ -49,7 +49,7 @@ export default function MembersListModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-      <div className="bg-[#e0e7ff] rounded-xl p-6 w-full max-w-md mx-4 relative">
+      <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 relative">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 transition-colors"
