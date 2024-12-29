@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
@@ -18,31 +18,32 @@ import ScrollSection from '@/components/ScrollSection'
 import RoadmapSection from '@/components/RoadmapSection'
 import NewsletterSection from '@/components/NewsletterSection'
 import BlockEFooter from '@/components/BlockEFooter'
+import FeatureSection from '@/components/FeatureSection'
 
 const AnimatedNumber = ({ value }: { value: number }) => {
-  const [displayValue, setDisplayValue] = useState(0)
+  const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    let start = 0
-    const end = value
-    const duration = 2000
-    const startTime = Date.now()
+    let start = 0;
+    const end = value;
+    const duration = 2000;
+    const startTime = Date.now();
 
     const timer = setInterval(() => {
-      const now = Date.now()
-      const progress = Math.min((now - startTime) / duration, 1)
-      setDisplayValue(Math.floor(progress * (end - start) + start))
+      const now = Date.now();
+      const progress = Math.min((now - startTime) / duration, 1);
+      setDisplayValue(Math.floor(progress * (end - start) + start));
 
       if (progress === 1) {
-        clearInterval(timer)
+        clearInterval(timer);
       }
-    }, 50)
+    }, 50);
 
-    return () => clearInterval(timer)
-  }, [value])
+    return () => clearInterval(timer);
+  }, [value]);
 
-  return <span>{displayValue.toLocaleString()}</span>
-}
+  return <span>{displayValue.toLocaleString()}</span>;
+};
 
 export default function Home() {
   const { isConnected, setShowWalletModal } = useWallet()
@@ -65,32 +66,28 @@ export default function Home() {
 
   const backgroundY = useTransform(scrollYProgress, [0, 1], ['0%', '50%'])
   const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [1, 0.5, 0])
-
   const heroContentY = useTransform(scrollYProgress, [0, 0.5], ['0%', '50%'])
 
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const mousePositionRef = useRef({ x: 0, y: 0 })
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    mousePositionRef.current = { x: e.clientX, y: e.clientY }
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [handleMouseMove])
+
   const [darkMode, setDarkMode] = useState(false)
 
   const handleThemeChange = (isDark: boolean) => {
     setDarkMode(isDark)
   }
 
-  const handleMouseMove = (e: MouseEvent) => {
-    setMousePosition({ x: e.clientX, y: e.clientY })
-  }
 
-  useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [])
-
-  useEffect(() => {
-    // ... existing code using mousePosition
-  }, [mousePosition])
-
-
-  const lightBackgroundImage = "/blockchain-background.gif";
-  const darkBackgroundImage = "/dark-blockchain-background.gif";
+  const lightBackgroundImage = "/blockchain-background.gif"
+  const darkBackgroundImage = "/dark-blockchain-background.gif"
 
   return (
     <div ref={containerRef} className="min-h-screen bg-white dark:bg-gray-900 relative overflow-hidden transition-colors duration-200">
@@ -165,10 +162,9 @@ export default function Home() {
 
           <motion.div
             className="hidden md:block fixed w-20 h-20 rounded-full bg-gradient-to-r from-blockchain-blue to-blockchain-purple opacity-20 pointer-events-none"
-            style={{
-              left: mousePosition.x,
-              top: mousePosition.y,
-              transform: 'translate(-50%, -50%)'
+            animate={{
+              x: mousePositionRef.current.x,
+              y: mousePositionRef.current.y,
             }}
             transition={{ type: 'spring', damping: 10, stiffness: 50 }}
           />
@@ -177,7 +173,7 @@ export default function Home() {
         <ScrollIndicator />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ScrollSection className="py-20 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl my-8">
+          <ScrollSection className="py-20 bg-gradient-to-br from-blockchain-blue/5 to-blockchain-purple/5 dark:from-blockchain-blue/10 dark:to-blockchain-purple/10 backdrop-blur-md rounded-xl my-8">
             <div className="container mx-auto px-4">
               <SectionTitle>Discover BlockE Features</SectionTitle>
               <motion.div 
@@ -194,6 +190,7 @@ export default function Home() {
                     "Mint your BlockE UID",
                     "Use your UID across the BlockE ecosystem"
                   ]}
+                  color="from-blue-400 to-indigo-600"
                 />
                 <FeatureCard 
                   icon={Binary} 
@@ -206,6 +203,7 @@ export default function Home() {
                     "Manage your crypto assets",
                     "Enjoy secure, decentralized communication"
                   ]}
+                  color="from-purple-400 to-pink-600"
                 />
                 <FeatureCard 
                   icon={Shield} 
@@ -218,6 +216,7 @@ export default function Home() {
                     "Select a staking period",
                     "Confirm the transaction and start earning"
                   ]}
+                  color="from-green-400 to-teal-600"
                 />
                 <FeatureCard 
                   icon={Bot} 
@@ -230,6 +229,7 @@ export default function Home() {
                     "Explore blockchain data with AI assistance",
                     "Make informed decisions based on AI recommendations"
                   ]}
+                  color="from-red-400 to-orange-600"
                 />
                 <FeatureCard 
                   icon={BarChart2} 
@@ -242,218 +242,70 @@ export default function Home() {
                     "Analyze trends and patterns",
                     "Export or share your findings"
                   ]}
+                  color="from-yellow-400 to-amber-600"
                 />
               </motion.div>
             </div>
           </ScrollSection>
 
-          <ScrollSection className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl my-8">
-            <RoadmapSection />
+          {/* BlockE UID Section */}
+          <ScrollSection className="bg-gradient-to-r from-blockchain-blue/10 to-blockchain-purple/10 dark:from-blockchain-blue/20 dark:to-blockchain-purple/20 rounded-xl my-12 px-6">
+            <FeatureSection
+              title="BlockE UID"
+              description="Secure your unique blockchain identity with BlockE UID. Mint your personalized identifier and take control of your Web3 presence."
+              ctaText="Get Your BlockE UID"
+              ctaLink="/blocke-uid"
+              imageSrc="/blocke-uid-preview.png"
+              imageAlt="BlockE UID Preview"
+              variant="purple"
+            />
           </ScrollSection>
 
-          <ScrollSection className="bg-gradient-to-r from-blockchain-blue/10 to-blockchain-purple/10 dark:from-blockchain-blue/20 dark:to-blockchain-purple/20 rounded-xl my-8">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col md:flex-row items-center">
-                <motion.div 
-                  className="md:w-1/2 mb-8 md:mb-0"
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blockchain-blue to-blockchain-purple bg-clip-text text-transparent">BlockE UID</h2>
-                  <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">Secure your unique blockchain identity with BlockE UID. Mint your personalized identifier and take control of your Web3 presence.</p>
-                  <Link href="/blocke-uid" className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blockchain-blue to-blockchain-purple text-white rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <span>Get Your BlockE UID</span>
-                    <ArrowRight className="ml-2" size={20} />
-                  </Link>
-                </motion.div>
-                <motion.div 
-                  className="md:w-1/2"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <div className="relative">
-                    <Image 
-                      src="/blocke-uid-preview.png" 
-                      alt="BlockE UID Preview" 
-                      width={500} 
-                      height={300} 
-                      className="rounded-lg shadow-lg"
-                    />
-                    <motion.div 
-                      className="absolute -top-4 -left-4 w-20 h-20 bg-blockchain-blue rounded-full"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                    />
-                    <motion.div 
-                      className="absolute -bottom-4 -right-4 w-16 h-16 bg-blockchain-purple rounded-full"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ repeat: Infinity, duration: 2, delay: 1 }}
-                    />
-                  </div>
-                </motion.div>
-              </div>
-            </div>
+          {/* CW² Section */}
+          <ScrollSection className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl my-12 px-6">
+            <FeatureSection
+              title="CW² (Crypto Wallet 2)"
+              description="Experience the next generation of crypto wallet management. Send messages, create groups, and manage your assets with ease."
+              ctaText="Explore CW²"
+              ctaLink="/cw2"
+              imageSrc="/cw2-preview.png"
+              imageAlt="CW² Preview"
+              variant="teal"
+            />
           </ScrollSection>
 
-          <ScrollSection className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl my-8">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col md:flex-row-reverse items-center">
-                <motion.div 
-                  className="md:w-1/2 mb-8 md:mb-0"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-future-cyan to-future-green bg-clip-text text-transparent">CW² (Crypto Wallet 2)</h2>
-                  <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">Experience the next generation of crypto wallet management. Send messages, create groups, and manage your assets with ease.</p>
-                  <Link href="/cw2" className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-future-cyan to-future-green text-white rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <span>Explore CW²</span>
-                    <ArrowRight className="ml-2" size={20} />
-                  </Link>
-                </motion.div>
-                <motion.div 
-                  className="md:w-1/2"
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <div className="relative">
-                    <Image 
-                      src="/cw2-preview.png" 
-                      alt="CW² Preview" 
-                      width={500} 
-                      height={300} 
-                      className="rounded-lg shadow-lg"
-                    />
-                    <motion.div 
-                      className="absolute -top-4 -right-4 w-20 h-20 bg-future-cyan rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 10, ease: "linear" }}
-                    />
-                    <motion.div 
-                      className="absolute -bottom-4 -left-4 w-16 h-16 bg-future-green rounded-full"
-                      animate={{ rotate: -360 }}
-                      transition={{ repeat: Infinity, duration: 10, ease: "linear" }}
-                    />
-                  </div>
-                </motion.div>
-              </div>
-            </div>
+          {/* BE Staking Section */}
+          <ScrollSection className="bg-gradient-to-r from-blockchain-blue/10 to-blockchain-purple/10 dark:from-blockchain-blue/20 dark:to-blockchain-purple/20 rounded-xl my-12 px-6">
+            <FeatureSection
+              title="BE Staking"
+              description="Maximize your BE token holdings through our staking program. Earn rewards and participate in the BlockE ecosystem."
+              ctaText="Start Staking"
+              ctaLink="/be-staking"
+              imageSrc="/be-staking-preview.png"
+              imageAlt="BE Staking Preview"
+              variant="purple"
+            />
           </ScrollSection>
 
-          <ScrollSection className="bg-gradient-to-r from-future-cyan/10 to-future-green/10 dark:from-future-cyan/20 dark:to-future-green/20 rounded-xl my-8">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col md:flex-row items-center">
-                <motion.div 
-                  className="md:w-1/2 mb-8 md:mb-0"
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blockchain-blue to-blockchain-purple bg-clip-text text-transparent">BE Staking</h2>
-                  <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">Maximize your BE token holdings through our staking program. Earn rewards and participate in the BlockE ecosystem.</p>
-                  <Link href="/be-staking" className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blockchain-blue to-blockchain-purple text-white rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <span>Start Staking</span>
-                    <ArrowRight className="ml-2" size={20} />
-                  </Link>
-                </motion.div>
-                <motion.div 
-                  className="md:w-1/2"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <div className="relative">
-                    <Image 
-                      src="/be-staking-preview.png" 
-                      alt="BE Staking Preview" 
-                      width={500} 
-                      height={300} 
-                      className="rounded-lg shadow-lg"
-                    />
-                    <motion.div 
-                      className="absolute -top-4 -left-4 w-20 h-20 bg-blockchain-blue rounded-full"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ repeat: Infinity, duration: 2, repeatType: "reverse" }}
-                    />
-                    <motion.div 
-                      className="absolute -bottom-4 -right-4 w-16 h-16 bg-blockchain-purple rounded-full"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ repeat: Infinity, duration: 2, delay: 1, repeatType: "reverse" }}
-                    />
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-          </ScrollSection>
-
-          <ScrollSection className="py-20 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl my-8">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col md:flex-row-reverse items-center">
-                <motion.div 
-                  className="md:w-1/2 mb-8 md:mb-0"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-future-cyan to-future-green bg-clip-text text-transparent">BlockE AI</h2>
-                  <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">Get instant answers to your blockchain and crypto questions with our AI-powered assistant. Stay informed and make better decisions.</p>
-                  <Link href="/blocke-ai" className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-future-cyan to-future-green text-white rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <span>Chat with BlockE AI</span>
-                    <ArrowRight className="ml-2" size={20} />
-                  </Link>
-                </motion.div>
-                <motion.div 
-                  className="md:w-1/2"
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <div className="relative">
-                    <Image 
-                      src="/blocke-ai-preview.png" 
-                      alt="BlockE AI Preview" 
-                      width={500} 
-                      height={300} 
-                      className="rounded-lg shadow-lg"
-                    />
-                    <motion.div 
-                      className="absolute -top-4 -right-4 w-20 h-20 bg-future-cyan rounded-full"
-                      animate={{ 
-                        scale: [1, 1.2, 1],
-                        rotate: 360
-                      }}
-                      transition={{ 
-                        duration: 4,
-                        repeat: Infinity,
-                        repeatType: "loop"
-                      }}
-                    />
-                    <motion.div 
-                      className="absolute -bottom-4 -left-4 w-16 h-16 bg-future-green rounded-full"
-                      animate={{ 
-                        scale: [1, 1.2, 1],
-                        rotate: -360
-                      }}
-                      transition={{ 
-                        duration: 4,
-                        delay: 2,
-                        repeat: Infinity,
-                        repeatType: "loop"
-                      }}
-                    />
-                  </div>
-                </motion.div>
-              </div>
-            </div>
+          {/* BlockE AI Section */}
+          <ScrollSection className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl my-12 px-6">
+            <FeatureSection
+              title="BlockE AI"
+              description="Get instant answers to your blockchain and crypto questions with our AI-powered assistant. Stay informed and make better decisions."
+              ctaText="Chat with BlockE AI"
+              ctaLink="/blocke-ai"
+              imageSrc="/blocke-ai-preview.png"
+              imageAlt="BlockE AI Preview"
+              variant="teal"
+            />
           </ScrollSection>
 
           <ScrollSection className="bg-gradient-to-r from-blockchain-blue/10 to-blockchain-purple/10 dark:from-blockchain-blue/20 dark:to-blockchain-purple/20 rounded-xl my-8">
             <div className="container mx-auto px-4 text-center">
               <SectionTitle>Powerful Analytics Dashboard</SectionTitle>
-              <p className="text-xl mb-12 max-w-2xl mx-auto text-gray-700 dark:text-gray-300">Get comprehensive insights into blockchain activities, token holdings, and market trends with our intuitive dashboard.</p>
+              <p className="text-xl mb-12 max-w-2xl mx-auto text-gray-700 dark:text-gray-300">
+                Get comprehensive insights into blockchain activities, token holdings, and market trends with our intuitive dashboard.
+              </p>
               <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -471,7 +323,7 @@ export default function Home() {
                   className="absolute -top-8 -left-8 w-24 h-24 bg-blockchain-blue rounded-full"
                   animate={{ 
                     scale: [1, 1.2, 1],
-                    rotate: 360
+                    rotate: 360 
                   }}
                   transition={{ 
                     duration: 6,
@@ -483,7 +335,7 @@ export default function Home() {
                   className="absolute -bottom-8 -right-8 w-20 h-20 bg-blockchain-purple rounded-full"
                   animate={{ 
                     scale: [1, 1.2, 1],
-                    rotate: -360
+                    rotate: -360 
                   }}
                   transition={{ 
                     duration: 6,
@@ -542,6 +394,10 @@ export default function Home() {
                 </motion.div>
               </div>
             </div>
+          </ScrollSection>
+
+          <ScrollSection className="bg-gradient-to-r from-blockchain-blue/10 to-blockchain-purple/10 dark:from-blockchain-blue/20 dark:to-blockchain-purple/20 rounded-xl my-12 px-6">
+            <RoadmapSection />
           </ScrollSection>
         </div>
 
