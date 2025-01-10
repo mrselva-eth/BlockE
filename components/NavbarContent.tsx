@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, Fragment, useCallback } from 'react'
 import Image from 'next/image'
 import { useWallet } from '@/contexts/WalletContext'
-import { User, LogOut } from 'lucide-react'
+import { User, LogOut, Lock, Unlock } from 'lucide-react'
 import userIcon from '/public/user.png'
 import MintModal from './MintModal'
 import MintAlertModal from './MintAlertModal'
@@ -13,345 +13,419 @@ import TransactionRejectedMessage from './TransactionRejectedMessage'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import NotificationIcon from './cw2/NotificationIcon'
+import { useTheme } from 'next-themes'
+import GasPriceDisplay from './GasPriceDisplay'
+
+import { useProfile } from '@/hooks/useProfile' // Import the hook
+import { useAutoDisconnect } from '@/hooks/useAutoDisconnect' // Import the hook
+import NavbarProfile from './NavbarProfile'; // Import NavbarProfile
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
 
 const POLYGON_CHAIN_ID = '0x89'
-const ETH_CHAIN_ID = '0x1'
 const POLYGON_RPC_URL = 'https://polygon-rpc.com'
 
+const RPC_ENDPOINTS = [
+'https://polygon-rpc.com',
+'https://polygon.llamarpc.com',
+'https://rpc-mainnet.maticvigil.com',
+'https://polygon-mainnet.public.blastapi.io'
+]
+
 export default function NavbarContent() {
-  const { isConnected, address, disconnectWallet, isCorrectNetwork, switchNetwork } = useWallet()
-  const [showDropdown, setShowDropdown] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const [showMintModal, setShowMintModal] = useState(false)
-  const [showMintAlertModal, setShowMintAlertModal] = useState(false)
-  const [isMinting, setIsMinting] = useState(false)
-  const [mintSuccess, setMintSuccess] = useState(false)
-  const [needsPayment, setNeedsPayment] = useState(false)
-  const [targetNetwork, setTargetNetwork] = useState<string | null>(null)
-  const [showTransactionRejected, setShowTransactionRejected] = useState(false)
-  const [tokenBalance, setTokenBalance] = useState<string>('0')
-  const pathname = usePathname()
-  const [currentNetwork, setCurrentNetwork] = useState<'Ethereum' | 'Polygon' | null>(null)
-  const [profileImage, setProfileImage] = useState<string | null>(null)
+const { isConnected, address, disconnectWallet, isAutoDisconnectEnabled, toggleAutoDisconnect } = useWallet() // Access isAutoDisconnectEnabled and toggleAutoDisconnect
+const [showDropdown, setShowDropdown] = useState(false)
+const dropdownRef = useRef<HTMLDivElement>(null)
+const [showMintModal, setShowMintModal] = useState(false)
+const [showMintAlertModal, setShowMintAlertModal] = useState(false)
+const [isMinting, setIsMinting] = useState(false)
+const [mintSuccess, setMintSuccess] = useState(false)
+const [needsPayment, setNeedsPayment] = useState(false)
+const [targetNetwork, setTargetNetwork] = useState<string | null>(null)
+const [showTransactionRejected, setShowTransactionRejected] = useState(false)
+const [tokenBalance, setTokenBalance] = useState<string>('0')
+const pathname = usePathname();
+const [profileImage, setProfileImage] = useState<string | null>(null)
+const { theme } = useTheme()
+const [polygonBalance, setPolygonBalance] = useState<string>('0.00')
+const [currentRpcIndex, setCurrentRpcIndex] = useState(0)
 
-  const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
+const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
-  const handleLogout = () => {
-    disconnectWallet()
-    setShowDropdown(false)
+// Use the useProfile hook
+const { profileData, isLoading: profileLoading, error: profileError, refetch } = useProfile(address || "");
+
+
+const handleLogout = () => {
+  disconnectWallet()
+  setShowDropdown(false)
+}
+
+const truncateAddress = (addr: string) => {
+  return `${addr.slice(0, 5)}...${addr.slice(-3)}`
+}
+
+const handleMintClick = () => {
+  if (pathname === '/dashboard') {
+    setShowMintAlertModal(true)
+  } else {
+    setShowMintModal(true)
   }
+}
 
-  const truncateAddress = (addr: string) => {
-    return `${addr.slice(0, 5)}...${addr.slice(-3)}`
-  }
+const handleMint = async () => {
+  try {
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+    
+    if (chainId !== POLYGON_CHAIN_ID) {
+      setTargetNetwork('Polygon')
+      return
+    }
 
-  const handleMintClick = () => {
-    if (pathname === '/dashboard') {
-      setShowMintAlertModal(true)
+    setIsMinting(true)
+
+    if (!window.ethereum) {
+      throw new Error("No Ethereum provider found. Please install MetaMask or another wallet.")
+    }
+
+    const provider = new ethers.BrowserProvider(window.ethereum)
+    const signer = await provider.getSigner()
+    
+    if (!signer) {
+      throw new Error("Failed to get signer. Please check your wallet connection.")
+    }
+
+    const beTokenContract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, signer)
+
+    if (!address) {
+      throw new Error("Wallet address not found.")
+    }
+
+    const hasClaimedFree = await beTokenContract.hasClaimedFree(address)
+    setNeedsPayment(hasClaimedFree)
+
+    let tx
+    if (hasClaimedFree) {
+      const maticCost = await beTokenContract.MATIC_COST()
+      tx = await beTokenContract.mint({ value: maticCost })
     } else {
-      setShowMintModal(true)
+      tx = await beTokenContract.mint()
     }
+
+    await tx.wait()
+    setMintSuccess(true)
+  } catch (error: any) {
+    if (error.code === 4001 || (error.info && error.info.error && error.info.error.code === 4001)) {
+      setShowTransactionRejected(true)
+    } else if (error.code === -32002) {
+      alert('Please check your wallet - you have a pending request.')
+    } else if (error.message && typeof error.message === 'string') {
+      alert(error.message)
+    } else {
+      alert('An unexpected error occurred. Please try again.')
+    }
+  } finally {
+    setIsMinting(false)
   }
+}
 
-  const handleMint = async () => {
-    try {
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' })
-      
-      if (chainId !== POLYGON_CHAIN_ID) {
-        setTargetNetwork('Polygon')
-        return
-      }
-
-      setIsMinting(true)
-
-      if (!window.ethereum) {
-        throw new Error("No Ethereum provider found. Please install MetaMask or another wallet.")
-      }
-
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
-      
-      if (!signer) {
-        throw new Error("Failed to get signer. Please check your wallet connection.")
-      }
-
-      const beTokenContract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, signer)
-
-      if (!address) {
-        throw new Error("Wallet address not found.")
-      }
-
-      const hasClaimedFree = await beTokenContract.hasClaimedFree(address)
-      setNeedsPayment(hasClaimedFree)
-
-      let tx
-      if (hasClaimedFree) {
-        const maticCost = await beTokenContract.MATIC_COST()
-        tx = await beTokenContract.mint({ value: maticCost })
-      } else {
-        tx = await beTokenContract.mint()
-      }
-
-      await tx.wait()
-      setMintSuccess(true)
-    } catch (error: any) {
-      if (error.code === 4001 || (error.info && error.info.error && error.info.error.code === 4001)) {
-        setShowTransactionRejected(true)
-      } else if (error.code === -32002) {
-        alert('Please check your wallet - you have a pending request.')
-      } else if (error.message && typeof error.message === 'string') {
-        alert(error.message)
-      } else {
-        alert('An unexpected error occurred. Please try again.')
-      }
-    } finally {
-      setIsMinting(false)
-    }
+const handleNetworkSwitch = async () => {
+  try {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: POLYGON_CHAIN_ID }],
+    })
+    setTargetNetwork(null)
+  } catch (error) {
+    console.error('Failed to switch network:', error)
   }
+}
 
-  const handleNetworkSwitch = async () => {
-    try {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: POLYGON_CHAIN_ID }],
-      })
-      setTargetNetwork(null)
-    } catch (error) {
-      console.error('Failed to switch network:', error)
-    }
-  }
+const fetchProfileImage = useCallback(async () => {
+  try {
+    const response = await fetch(`/api/profile?address=${address}`)
+    if (response.ok) {
+      const data = await response.json()
 
-  const fetchProfileImage = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/profile?address=${address}`)
-      if (response.ok) {
-        const data = await response.json()
-        if (data.profile?.profileImage) {
-          setProfileImage(data.profile.profileImage)
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching profile image:', error)
-    }
-  }, [address])
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
-
-  useEffect(() => {
-    const fetchTokenBalance = async () => {
-      if (isConnected && address) {
-        try {
-          const polygonProvider = new ethers.JsonRpcProvider(POLYGON_RPC_URL)
-          const contract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, polygonProvider)
-          const balance = await contract.balanceOf(address)
-          setTokenBalance(ethers.formatUnits(balance, 18))
-        } catch (error) {
-          console.error('Error fetching token balance:', error)
-          setTokenBalance('0')
-        }
-      }
-    }
-
-    fetchTokenBalance()
-  }, [isConnected, address])
-
-  useEffect(() => {
-    const checkNetwork = async () => {
-      if (typeof window.ethereum !== 'undefined') {
-        const provider = new ethers.BrowserProvider(window.ethereum)
-        const network = await provider.getNetwork()
-        const chainId = '0x' + network.chainId.toString(16)
-
-        if (chainId === ETH_CHAIN_ID) {
-          setCurrentNetwork('Ethereum')
-        } else if (chainId === POLYGON_CHAIN_ID) {
-          setCurrentNetwork('Polygon')
+      if (data.profile?.profileImage) {
+        // Check if the image is already base64 encoded
+        if (typeof data.profile.profileImage === 'string' && data.profile.profileImage.startsWith('data:image/')) {
+          setProfileImage(data.profile.profileImage);
         } else {
-          setCurrentNetwork(null)
+          // Convert the image buffer to a base64 string
+          const imageBase64 = Buffer.from(data.profile.profileImage.buffer).toString('base64');
+          setProfileImage(`data:image/png;base64,${imageBase64}`); // or data:image/jpeg;base64 depending on the image type
         }
+      } else if (isCEO) {
+        // Set default CEO image if no profile image is found
+        setProfileImage('/ceo.png');
       }
     }
+  } catch (error) {
+    console.error('Error fetching profile image:', error)
+    if (isCEO) {
+      // Set default CEO image if an error occurs
+      setProfileImage('/ceo.png');
+    }
+  }
+}, [address, isCEO])
 
-    checkNetwork()
-    if (window.ethereum) {
-      window.ethereum.on('chainChanged', checkNetwork)
-      return () => {
-        window.ethereum.removeListener('chainChanged', checkNetwork)
+useEffect(() => {
+  function handleClickOutside(event: MouseEvent) {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      setShowDropdown(false)
+    }
+  }
+
+  document.addEventListener('mousedown', handleClickOutside)
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutside)
+  }
+}, [])
+
+const getNextRpcEndpoint = () => {
+  const nextIndex = (currentRpcIndex + 1) % RPC_ENDPOINTS.length
+  setCurrentRpcIndex(nextIndex)
+  return RPC_ENDPOINTS[nextIndex]
+}
+
+const fetchWithFallback = async (fetchFn: () => Promise<any>, attempts = 0): Promise<any> => {
+  try {
+    return await fetchFn()
+  } catch (error: any) {
+    if (error?.message?.includes('Too many requests') && attempts < RPC_ENDPOINTS.length) {
+      const nextEndpoint = getNextRpcEndpoint()
+      console.log(`Switching to RPC endpoint: ${nextEndpoint}`)
+      await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempts), 10000)))
+      return fetchWithFallback(fetchFn, attempts + 1)
+    }
+    throw error
+  }
+}
+
+const fetchTokenBalance = async () => {
+  if (!isConnected || !address) {
+    setTokenBalance('0')
+    return
+  }
+
+  try {
+    const provider = new ethers.JsonRpcProvider(RPC_ENDPOINTS[currentRpcIndex])
+    const contract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, provider)
+  
+    const balance = await fetchWithFallback(async () => {
+      if (ethers.isAddress(address)) {
+        const result = await contract.balanceOf(address)
+        // Check for valid result before formatting
+        if (result === '0x' || result === null) {
+          console.warn('Unexpected balance result:', result)
+          return BigInt(0) // Return 0 if the result is invalid
+        }
+        return result
+      } else {
+        throw new Error('Invalid address')
       }
-    }
-  }, [])
+    })
+  
+    setTokenBalance(ethers.formatUnits(balance, 18))
+  } catch (error) {
+    console.error('Error fetching token balance:', error)
+    setTokenBalance('0')
+  }
+}
 
-  useEffect(() => {
-    if (address) {
-      fetchProfileImage()
+const fetchPolygonBalance = useCallback(async () => {
+    // Check if address is valid and exists before fetching balance
+    if (!address || !ethers.isAddress(address)) {
+      setPolygonBalance('0.00');
+      return;
     }
-  }, [address, fetchProfileImage])
 
-  return (
-    <>
-      <div className="flex justify-between items-center h-full w-full px-4">
-        <div className="flex items-center">
-          <Link href="/" className="flex items-center">
-            <div className="relative h-10 w-10">
-              <Image
-                src="/blocke-logo.png"
-                alt="BlockE Logo"
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-contain"
-                priority
-              />
-            </div>
-            <h1 className="ml-2 mr-4 text-xl sm:text-2xl font-bold text-gray-800">BlockE</h1>
-          </Link>
-          {isConnected && (
-            <div className="flex items-center ml-2">
-              {isCEO ? (
-                <div className="flex items-center ml-0 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-2 py-1 rounded-full">
-                  <Image
-                    src="/ceo.png"
-                    alt="CEO"
-                    width={20}
-                    height={20}
-                    className="rounded-full mr-1"
-                  />
-                  <span className="text-xs font-semibold">CEO</span>
-                </div>
-              ) : (
-                <div className="flex items-center ml-0 bg-gradient-to-r from-green-500 to-blue-500 text-white px-2 py-1 rounded-full">
-                  <Image
-                    src={userIcon}
-                    alt="User"
-                    width={20}
-                    height={20}
-                    className="rounded-full mr-1"
-                  />
-                  <span className="text-xs font-semibold">User</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+    try {
+      const provider = new ethers.JsonRpcProvider(RPC_ENDPOINTS[currentRpcIndex]);
+      const balance = await fetchWithFallback(async () => {
+        return await provider.getBalance(address);
+      });
+      setPolygonBalance(ethers.formatEther(balance).slice(0, 4));
+    } catch (error) {
+      console.error('Error fetching Polygon balance:', error);
+      setPolygonBalance('0.00');
+    }
+  }, [address, currentRpcIndex]);
+
+useEffect(() => {
+  if (address) {
+    refetch(); // Fetch profile data when address changes
+  }
+}, [address, refetch]);
+
+useEffect(() => {
+  // Update profile image whenever profileData changes
+  if (profileData?.profileImage) {
+    setProfileImage(profileData.profileImage);
+  } else if (isCEO) {
+    setProfileImage('/ceo.png'); // Default CEO image
+  } else {
+    setProfileImage(null); // Reset to default user icon if no image
+  }
+}, [profileData, isCEO]);
+
+useEffect(() => {
+  // Fetch profile image initially and when address changes
+  if (address) {
+    fetchProfileImage()
+  }
+}, [address, fetchProfileImage])
+
+useEffect(() => {
+    fetchTokenBalance();
+    fetchPolygonBalance(); // Call fetchPolygonBalance here to initialize balance
+    const intervalId = setInterval(() => {
+      fetchTokenBalance();
+      fetchPolygonBalance();
+    }, 15000); // Fetch every 15 seconds
+    return () => clearInterval(intervalId);
+  }, [fetchPolygonBalance, isConnected, address]);
+
+
+return (
+  <>
+    <div className={`flex justify-between items-center h-full w-full px-4 ${theme === 'dark' ? 'text-gray-900' : 'text-gray-800'}`}>
+      <div className="flex items-center">
+        <Link href="/" className="flex items-center">
+          <div className="relative h-10 w-10">
+            <Image
+              src="/blocke-logo.png"
+              alt="BlockE Logo"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-contain"
+              priority
+            />
+          </div>
+          <h1 className={`ml-2 mr-4 text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>BlockE</h1>
+        </Link>
         {isConnected && (
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 group relative">
-              <Image
-                src="/blocke-logo.png"
-                alt="BE Token"
-                width={24}
-                height={24}
-                className="rounded-full"
-              />
-              <span className="text-sm font-bold text-gray-800" style={{ fontFamily: 'var(--font-poppins)' }}>
-                BE Token: {parseFloat(tokenBalance).toFixed(2)}
-              </span>
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-1 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                Your BE Token Balance (on Polygon)
+          <div className="flex items-center ml-2">
+            {isCEO ? (
+              <div className="flex items-center ml-0 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-2 py-1 rounded-full">
+                <Image
+                  src={profileImage ? profileImage : "/ceo.png"}
+                  alt="CEO"
+                  width={20}
+                  height={20}
+                  className="rounded-full mr-1"
+                />
+                <span className="text-xs font-semibold">CEO</span>
               </div>
-            </div>
-            <NotificationIcon size={24} />
-            <button 
-              onClick={handleMintClick}
-              className="btn-23"
-            >
-              <span>Mint BE</span>
-            </button>
-            <Link href="/blocke-uid">
-              <button className="Btn-Container">
-                <span className="text">BlockE UID</span>
-                <div className="icon-Container">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 8h14M8 1l7 7-7 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </button>
-            </Link>
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors overflow-hidden"
-              >
-                {profileImage ? (
-                  <Image
-                    src={`data:image/jpeg;base64,${profileImage}`}
-                    alt="Profile"
-                    width={24}
-                    height={24}
-                    className="rounded-full"
-                  />
-                ) : (
-                  <User size={24} />
-                )}
-              </button>
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-10">
-                  <div className="px-4 py-2 text-sm text-gray-700">
-                    <div className="flex items-center mb-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                      <p className="font-semibold">Connected Wallet:</p>
-                    </div>
-                    <p>{address ? truncateAddress(address) : 'Not connected'}</p>
-                  </div>
-                  <div className="px-4 py-2 text-sm text-gray-700 border-t border-gray-100">
-                    <div className="flex items-center">
-                      <Image 
-                        src={currentNetwork === 'Ethereum' ? "/ethereum.png" : "/polygon.png"} 
-                        alt={`${currentNetwork} logo`} 
-                        width={16} 
-                        height={16} 
-                        className="mr-2" 
-                      />
-                      <p>Network: {currentNetwork || 'Unknown'}</p>
-                    </div>
-                  </div>
+            ) : (
+              <div className="flex items-center ml-0 bg-gradient-to-r from-green-500 to-blue-500 text-white px-2 py-1 rounded-full">
+                <Image
+                  src={profileImage ? profileImage : userIcon}
+                  alt="User"
+                  width={20}
+                  height={20}
+                  className="rounded-full mr-1"
+                />
+                <span className="text-xs font-semibold">User</span>
+              </div>
+            )}
+            {isConnected && (
+              <Fragment>
+                <div className="group relative ml-2"> {/* Added margin */}
                   <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors overflow-hidden"
+                    onClick={() => toggleAutoDisconnect(!isAutoDisconnectEnabled)} // Use toggleAutoDisconnect from useWallet
                   >
-                    <LogOut size={18} className="mr-2" />
-                    Log out
+                    {isAutoDisconnectEnabled ? (
+                      <Lock size={20} className="text-gray-600 dark:text-gray-400" />
+                    ) : (
+                      <Unlock size={20} className="text-gray-600 dark:text-gray-400" />
+                    )}
                   </button>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-1 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                    Auto-disconnect {isAutoDisconnectEnabled ? 'enabled' : 'disabled'}
+                    <div className="-bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                  </div>
                 </div>
-              )}
-            </div>
+              </Fragment>
+            )}
           </div>
         )}
       </div>
-      <MintModal
-        isOpen={showMintModal}
-        onClose={() => {
-          setShowMintModal(false)
-          setMintSuccess(false)
-          setTargetNetwork(null)
-        }}
-        onMint={handleMint}
-        isMinting={isMinting}
-        isSuccess={mintSuccess}
-        needsPayment={needsPayment}
-        onSwitch={handleNetworkSwitch}
-        targetNetwork={targetNetwork || undefined}
-      />
-      <MintAlertModal
-        isOpen={showMintAlertModal}
-        onClose={() => setShowMintAlertModal(false)}
-      />
-      {showTransactionRejected && (
-        <TransactionRejectedMessage onClose={() => setShowTransactionRejected(false)} />
+      {isConnected && (
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 group relative">
+            <Image
+              src="/polygon.png"
+              alt="Polygon"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+            <span className="text-sm font-bold text-gray-800 dark:text-white" style={{ fontFamily: 'var(--font-poppins)' }}>
+              {polygonBalance} MATIC
+            </span>
+          </div>
+          <GasPriceDisplay network="Polygon" />
+          <div className="flex items-center gap-2 group relative">
+            <Image
+              src="/blocke-logo.png"
+              alt="BE Token"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+            <span className="text-sm font-bold text-gray-800 dark:text-white" style={{ fontFamily: 'var(--font-poppins)' }}>
+              BE Token: {parseFloat(tokenBalance).toFixed(2)}
+            </span>
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-1 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+              Your BE Token Balance
+            </div>
+          </div>
+          <NotificationIcon size={24} />
+          <button 
+            onClick={handleMintClick}
+            className={`btn-23 ${theme === 'dark' ? 'bg-purple-700 hover:bg-purple-600' : ''}`}
+          >
+            <span>Mint BE</span>
+          </button>
+          <Link href="/blocke-uid">
+            <button className={`Btn-Container ${theme === 'dark' ? 'bg-purple-700 hover:bg-purple-600' : ''}`}>
+              <span className="text">BlockE UID</span>
+              <div className="icon-Container">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 8h14M8 1l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </button>
+          </Link>
+          <NavbarProfile /> {/* Replaced profile dropdown with NavbarProfile */}
+        </div>
       )}
-    </>
-  )
+    </div>
+    <MintModal
+      isOpen={showMintModal}
+      onClose={() => {
+        setShowMintModal(false)
+        setMintSuccess(false)
+        setTargetNetwork(null)
+      }}
+      onMint={handleMint}
+      isMinting={isMinting}
+      isSuccess={mintSuccess}
+      needsPayment={needsPayment}
+      onSwitch={handleNetworkSwitch}
+      targetNetwork={targetNetwork || undefined}
+    />
+    <MintAlertModal
+      isOpen={showMintAlertModal}
+      onClose={() => setShowMintAlertModal(false)}
+    />
+    {showTransactionRejected && (
+      <TransactionRejectedMessage onClose={() => setShowTransactionRejected(false)} />
+    )}
+  </>
+)
 }
 

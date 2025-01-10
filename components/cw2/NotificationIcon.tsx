@@ -24,32 +24,27 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
 
-  const fetchNotifications = useCallback(() => {
-    if (!address) return;
+  const fetchNotifications = useCallback(async () => {
+    if (!address) return
 
-    fetch(`/api/notifications?userAddress=${address}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch notifications')
-        }
-        return response.json()
-      })
-      .then(fetchedNotifications => {
-        setNotifications(fetchedNotifications)
-        setUnreadCount(fetchedNotifications.filter((n: Notification) => !n.read).length)
-      })
-      .catch(err => {
-        console.error('Failed to fetch notifications:', err)
-      })
+    try {
+      const response = await fetch(`/api/notifications?userAddress=${address}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch notifications')
+      }
+      const fetchedNotifications = await response.json()
+      setNotifications(fetchedNotifications)
+      setUnreadCount(fetchedNotifications.filter((n: Notification) => !n.read).length)
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err)
+    }
   }, [address])
 
   useEffect(() => {
-    if (address) {
-      fetchNotifications()
-      const interval = setInterval(fetchNotifications, 10000)
-      return () => clearInterval(interval)
-    }
-  }, [address, fetchNotifications])
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 10000)
+    return () => clearInterval(interval)
+  }, [fetchNotifications])
 
   const handleNotificationClick = async (notificationId: string) => {
     try {

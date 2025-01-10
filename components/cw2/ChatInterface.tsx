@@ -9,6 +9,7 @@ import { encryptMessage, decryptMessage } from '@/utils/encryption'
 import Image from 'next/image'
 import { format, isToday, isYesterday, isSameDay } from 'date-fns'
 import ExceptionMessage from './ExceptionMessage'
+import { useProfile } from '@/hooks/useProfile'
 
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false })
 
@@ -38,6 +39,7 @@ interface Message {
   isGroup: boolean;
   decryptedMessage?: string;
   createdAt: string;
+  role?: 'user' | 'assistant'; // Added role property
 }
 
 interface DeleteConfirmationProps {
@@ -81,6 +83,7 @@ export default function ChatInterface({ selectedContact, selectedGroup, isGroup 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messageContainerRef = useRef<HTMLDivElement>(null)
+  const { profileData } = useProfile(address) // Access profile data
 
   const selectedEntity = isGroup ? selectedGroup : selectedContact
   const selectedAddress = isGroup ? selectedGroup?.groupName : selectedContact?.contactAddress
@@ -138,7 +141,6 @@ export default function ChatInterface({ selectedContact, selectedGroup, isGroup 
     setError(null)
 
     try {
-      await sendMessageOnChain()
       const encryptedMsg = await encryptMessage(message, selectedAddress!)
       
       const response = await fetch('/api/messages', {
@@ -151,12 +153,16 @@ export default function ChatInterface({ selectedContact, selectedGroup, isGroup 
           receiverAddress: selectedAddress,
           encryptedMessage: encryptedMsg,
           isGroup,
+          role: 'user', // Added role property
         }),
       })
 
       if (!response.ok) {
         throw new Error('Failed to send message')
       }
+
+      // Call sendMessageOnChain AFTER successfully saving the message
+      await sendMessageOnChain()
 
       setMessage('')
       await fetchMessages()
@@ -297,7 +303,7 @@ export default function ChatInterface({ selectedContact, selectedGroup, isGroup 
             acc.push(
               <div
                 key={message._id}
-                className={`flex flex-col ${isSender ? 'items-end' : 'items-start'}`}
+                className={`flex items-start gap-3 ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
               >
                 <div
                   className={`max-w-[70%] rounded-2xl px-4 py-2 ${
@@ -316,6 +322,17 @@ export default function ChatInterface({ selectedContact, selectedGroup, isGroup 
                 <span className="text-xs text-gray-500 mt-1">
                   {format(new Date(message.createdAt), 'HH:mm')}
                 </span>
+                {message.role === 'user' && (
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                    <Image
+                      src={profileData?.profileImage || "/user.png"} // Use profile image or default
+                      alt="User"
+                      width={32}
+                      height={32}
+                      className="object-cover"
+                    />
+                  </div>
+                )}
               </div>
             )
             return acc

@@ -8,8 +8,9 @@ import TokenManagementSidebar from '@/components/ai/TokenManagementSidebar'
 import { formatDate } from '@/utils/formatDate'
 import { useAIBalance } from '@/hooks/useAIBalance'
 import Sidebar from '@/components/Sidebar'
+import { withWalletProtection } from '@/components/withWalletProtection'
 
-export default function BlockEAIPage() {
+function BlockEAIPage() {
   const { isConnected, address } = useWallet()
   const { balance, refreshBalance } = useAIBalance()
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -33,13 +34,13 @@ export default function BlockEAIPage() {
     return () => clearInterval(intervalId)
   }, [refreshBalance])
 
-  if (!isConnected) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <p className="text-lg text-gray-600">Please connect your wallet to access BlockE AI</p>
-      </div>
-    )
-  }
+  // if (!isConnected) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+  //       <p className="text-lg text-gray-600">Please connect your wallet to access BlockE AI</p>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] relative">
@@ -67,7 +68,7 @@ export default function BlockEAIPage() {
             {/* Balance - Left Side */}
             <div className="rounded-lg p-4 bg-gradient-to-r from-indigo-500/90 to-purple-500/90 backdrop-blur-sm text-white shadow-lg">
               <div className="text-3xl font-bold">{balance} BE</div>
-              <div className="text-sm opacity-90">BlockE AI Deposited Balance</div>
+              <div className="text-sm opacity-90">BlockE AI Deposit Balance</div>
             </div>
 
             {/* Time - Right Side */}
@@ -93,4 +94,6 @@ export default function BlockEAIPage() {
     </div>
   )
 }
+
+export default withWalletProtection(BlockEAIPage)
 

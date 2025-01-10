@@ -41,7 +41,6 @@ export default function ENSName({ address, ensName }: ENSNameProps) {
         </button>
       </div>
       
-      {/* Full address tooltip */}
       <div className="absolute left-1/2 -translate-x-1/2 top-0 transform -translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none mb-2">
         <div className="bg-black text-white text-sm rounded-lg py-2 px-4 text-center">
           {address}

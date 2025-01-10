@@ -1,8 +1,7 @@
 'use client'
 
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react'
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react'
 import { ethers } from 'ethers'
-import CoinbaseWalletSDK from '@coinbase/wallet-sdk'
 
 interface WalletContextType {
   signer: ethers.Signer | null
@@ -17,54 +16,135 @@ interface WalletContextType {
   switchNetwork: () => Promise<void>
   showSuccessAnimation: boolean
   setShowSuccessAnimation: (show: boolean) => void
+  isAutoDisconnectEnabled: boolean
+  toggleAutoDisconnect: (enabled: boolean) => void
+  theme: string
+  setTheme: (theme: string) => void
+  showDisconnectAnimation: boolean
+  setShowDisconnectAnimation: (show: boolean) => void
+  lastActivityTime: number
+  updateLastActivityTime: () => void
+  showDisconnectAlert: boolean
+  setShowDisconnectAlert: (show: boolean) => void
+  resetAutoDisconnectTimer: (callback?: () => void) => void
+  showNetworkAlert: boolean;
+  showNetworkSwitchAlert: () => void;
+  hideNetworkSwitchAlert: () => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
 
-const ETH_MAINNET_CHAIN_ID = '0x1'
+const POLYGON_CHAIN_ID = '0x89'
 
-const providerOptions = {
-  coinbasewallet: {
-    package: CoinbaseWalletSDK,
-    options: {
-      appName: "BlockE",
-      infuraId: process.env.NEXT_PUBLIC_INFURA_ID
-    }
-  }
-}
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000 // 5 minutes
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [signer, setSigner] = useState<ethers.Signer | null>(null)
   const [address, setAddress] = useState<string | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [showWalletModal, setShowWalletModal] = useState(false)
-  const [isCorrectNetwork, setIsCorrectNetwork] = useState(false)
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
+  const [theme, setTheme] = useState('light')
+  const [showDisconnectAnimation, setShowDisconnectAnimation] = useState(false)
+  const [lastActivity, setLastActivity] = useState(Date.now())
+  const [showDisconnectAlert, setShowDisconnectAlert] = useState<boolean>(false)
+  const [showNetworkAlert, setShowNetworkAlert] = useState(false)
+  const [isAutoDisconnectEnabled, setIsAutoDisconnectEnabled] = useState(true);
+
+
+  const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const resetTimer = useCallback(() => {
+    setLastActivity(Date.now())
+  }, [])
+
+  const startTimer = useCallback(
+    (callback: () => void) => {
+      return setTimeout(() => {
+        const now = Date.now()
+        if (now - lastActivity >= INACTIVITY_TIMEOUT) {
+          callback()
+        }
+      }, INACTIVITY_TIMEOUT - (Date.now() - lastActivity))
+    },
+    [lastActivity]
+  )
+
+  const toggleAutoDisconnect = useCallback((newValue: boolean) => {
+    setIsAutoDisconnectEnabled(newValue);
+    localStorage.setItem('autoDisconnectEnabled', newValue.toString())
+  }, [])
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null
+
+    if (isConnected && isAutoDisconnectEnabled) {
+      timer = startTimer(() => {
+        setShowDisconnectAlert(true)
+      })
+    }
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer)
+      }
+    }
+  }, [isConnected, isAutoDisconnectEnabled, startTimer, setShowDisconnectAlert, lastActivity])
+
+
+  const updateLastActivityTime = useCallback(() => {
+    resetTimer() 
+  }, [resetTimer])
+
+  const resetAutoDisconnectTimer = useCallback(
+    (callback?: () => void) => {
+      if (disconnectTimerRef.current) {
+        clearTimeout(disconnectTimerRef.current)
+      }
+
+      if (isAutoDisconnectEnabled && isConnected) {
+        disconnectTimerRef.current = startTimer(async () => { 
+          if (isAutoDisconnectEnabled && isConnected) {
+            setShowDisconnectAlert(true)
+            if (callback) {
+              await callback()
+            }
+          }
+        })
+      }
+    },
+    [isAutoDisconnectEnabled, isConnected, setShowDisconnectAlert, startTimer] 
+  )
 
   const checkNetwork = useCallback(async (provider: any) => {
     if (provider.request) {
       const chainId = await provider.request({ method: 'eth_chainId' })
-      const isCorrect = chainId === ETH_MAINNET_CHAIN_ID
-      setIsCorrectNetwork(isCorrect)
-      return isCorrect
+      return chainId === POLYGON_CHAIN_ID
     }
     return false
   }, [])
 
   const disconnectWallet = useCallback(() => {
-    setSigner(null)
-    setAddress(null)
-    setIsConnected(false)
-    setIsCorrectNetwork(false)
-    setShowSuccessAnimation(false)
-    
-    // Clear saved connection from local storage
-    localStorage.removeItem('walletConnection')
-    
-    if (typeof window !== 'undefined' && window.ethereum) {
-      window.ethereum.removeListener('accountsChanged', handleAccountsChanged)
-      window.ethereum.removeListener('chainChanged', handleChainChanged)
-    }
+    setShowDisconnectAnimation(true)
+
+    setTimeout(() => {
+      setSigner(null)
+      setAddress(null)
+      setIsConnected(false)
+      setShowSuccessAnimation(false)
+      setShowDisconnectAlert(false)
+      setShowNetworkAlert(false)
+      if (disconnectTimerRef.current) {
+        clearTimeout(disconnectTimerRef.current)
+      }
+      localStorage.removeItem('walletConnection')
+
+      if (typeof window !== 'undefined' && window.ethereum) {
+        window.ethereum.removeAllListeners()
+      }
+
+      setShowDisconnectAnimation(false)
+    }, 0)
   }, [])
 
   const handleAccountsChanged = useCallback((accounts: string[]) => {
@@ -72,7 +152,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       disconnectWallet()
     } else if (accounts[0] !== address) {
       setAddress(accounts[0])
-      // Update saved connection in local storage
       const savedConnection = localStorage.getItem('walletConnection')
       if (savedConnection) {
         const { providerType } = JSON.parse(savedConnection)
@@ -81,116 +160,145 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [address, disconnectWallet])
 
-  const handleChainChanged = useCallback(async () => {
+  const handleChainChanged = useCallback(async (chainId: string) => {
     if (window.ethereum) {
-      await checkNetwork(window.ethereum)
+      const isCorrect = await checkNetwork(window.ethereum)
     }
   }, [checkNetwork])
+
+  const setupNetworkChangeListener = useCallback(() => {
+    if (window.ethereum) {
+      window.ethereum.on('chainChanged', (chainId: string) => {
+        if (chainId !== POLYGON_CHAIN_ID) {
+          showNetworkSwitchAlert()
+        } else {
+          hideNetworkSwitchAlert()
+        }
+      })
+    }
+  }, [])
 
   const connectWallet = useCallback(async (providerType: string, isAutoConnect: boolean = false) => {
     try {
-      let provider;
+      let provider
       switch (providerType) {
         case 'metamask':
           if (typeof window !== 'undefined' && window.ethereum) {
-            // Check if MetaMask is installed and accessible
             if (window.ethereum.isMetaMask) {
-              provider = window.ethereum;
+              provider = window.ethereum
             } else {
-              throw new Error("MetaMask is not installed or not accessible");
+              throw new Error("MetaMask is not installed or not accessible")
             }
           } else {
-            throw new Error("Ethereum object not found. Please install MetaMask.");
+            throw new Error("Ethereum object not found. Please install MetaMask.")
           }
-          break;
+          break
         case 'coinbase':
-          // Implement Coinbase Wallet connection logic here
-          throw new Error("Coinbase Wallet connection not implemented");
+          throw new Error("Coinbase Wallet connection not implemented")
         default:
-          throw new Error("Unsupported wallet type");
+          throw new Error("Unsupported wallet type")
       }
 
       if (!provider) {
-        throw new Error("No provider available");
+        throw new Error("No provider available")
       }
 
-      // Ensure that the provider is ready before proceeding
-      if (typeof provider.request !== 'function') {
-        throw new Error("Provider is not ready or doesn't have expected methods");
+      // Check for and handle pending requests
+      if (provider._state.accounts && provider._state.accounts.length > 0) {
+        // Accounts are already available, resolve immediately
+        const ethersProvider = new ethers.BrowserProvider(provider)
+        const newSigner = await ethersProvider.getSigner()
+        const newAddress = await newSigner.getAddress()
+        setSigner(newSigner)
+        setAddress(newAddress)
+        setIsConnected(true)
+        setShowWalletModal(false)
+        if (!isAutoConnect) {
+          setShowSuccessAnimation(true)
+        }
+        resetAutoDisconnectTimer()
+
+        const isCorrectNetwork = await checkNetwork(provider)
+        if (!isCorrectNetwork) {
+          showNetworkSwitchAlert() 
+        }
+
+        provider.on('accountsChanged', handleAccountsChanged)
+        provider.on('chainChanged', (chainId: string) => {
+          handleChainChanged(chainId)
+        })
+
+        localStorage.setItem('walletConnection', JSON.stringify({ providerType, address: newAddress }))
+        return;
+      } else if (provider._state.isUnlocked === false) {
+        // Wallet is locked, prompt user to unlock
+        throw new Error("Please unlock your MetaMask wallet.")
       }
 
-      const ethersProvider = new ethers.BrowserProvider(provider);
-      const signer = await ethersProvider.getSigner();
-      const address = await signer.getAddress();
-      
-      setSigner(signer);
-      setAddress(address);
-      setIsConnected(true);
-      setShowWalletModal(false);
+      // Request accounts and handle potential pending requests
+      await provider.request({ method: 'eth_requestAccounts' }).catch((error: any) => {
+        if (error.code === -32002) {
+          // Pending request, let MetaMask handle it
+          console.warn("MetaMask request already pending. Awaiting user response.")
+          throw error // Re-throw to prevent further execution
+        } else if (error.code === 4001) {
+          // User rejected
+          throw new Error("User rejected the request.")
+        } else {
+          throw new Error("An unexpected error occurred.")
+        }
+      })
+
+      const ethersProvider = new ethers.BrowserProvider(provider)
+      const newSigner = await ethersProvider.getSigner()
+      const newAddress = await newSigner.getAddress()
+
+      setSigner(newSigner)
+      setAddress(newAddress)
+      setIsConnected(true)
+      setShowWalletModal(false)
       if (!isAutoConnect) {
-        setShowSuccessAnimation(true);
+        setShowSuccessAnimation(true)
       }
-      
-      if (provider.on) {
-        provider.on('accountsChanged', handleAccountsChanged);
-        provider.on('chainChanged', handleChainChanged);
+      resetAutoDisconnectTimer()
+
+      const isCorrectNetwork = await checkNetwork(provider)
+      if (!isCorrectNetwork) {
+        showNetworkSwitchAlert() 
       }
 
-      // Check network after successful connection
-      await checkNetwork(provider);
+      provider.on('accountsChanged', handleAccountsChanged)
+      provider.on('chainChanged', (chainId: string) => {
+        handleChainChanged(chainId)
+      })
 
-      // Save connection info to local storage
-      localStorage.setItem('walletConnection', JSON.stringify({ providerType, address }));
+      localStorage.setItem('walletConnection', JSON.stringify({ providerType, address: newAddress }))
 
     } catch (error: any) {
-      console.error("Failed to connect:", error);
-      if (error.message.includes("User rejected the request")) {
-        console.log("User rejected the wallet connection request");
+      console.error("Failed to connect:", error)
+      if (error.code === -32002) {
+        alert('You have a pending wallet connection request. Please check MetaMask.')
+      } else if (error.message.includes("User rejected the request")) {
+        console.log("User rejected the wallet connection request")
       } else {
-        disconnectWallet();
+        alert(error.message || 'An unexpected error occurred during wallet connection. Please try again.')
+        disconnectWallet()
       }
-      throw error;
     }
-  }, [checkNetwork])
+  }, [checkNetwork, handleAccountsChanged, handleChainChanged, resetAutoDisconnectTimer, disconnectWallet])
 
   const isWalletReady = useCallback(async (provider: any): Promise<boolean> => {
-    if (!provider) return false;
-    
+    if (!provider) return false
+
     try {
-      await provider.request({ method: 'eth_accounts' });
-      return true;
+      await provider.request({ method: 'eth_accounts' })
+      return true
     } catch (error) {
-      console.error("Wallet is not ready:", error);
-      return false;
+      console.error("Wallet is not ready:", error)
+      return false
     }
-  }, []);
+  }, [])
 
-  useEffect(() => {
-    const initializeWallet = async () => {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        const isReady = await isWalletReady(window.ethereum);
-        if (isReady) {
-          const savedConnection = localStorage.getItem('walletConnection');
-          if (savedConnection) {
-            const { providerType } = JSON.parse(savedConnection);
-            connectWallet(providerType, true);
-          }
-        } else {
-          console.log("Wallet is not ready yet. Retrying in 1 second...");
-          setTimeout(initializeWallet, 1000);
-        }
-      }
-    };
-
-    initializeWallet();
-
-    return () => {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        window.ethereum.removeAllListeners('accountsChanged')
-        window.ethereum.removeAllListeners('chainChanged')
-      }
-    }
-  }, [connectWallet, isWalletReady])
 
   const verifyCaptcha = useCallback(async (token: string): Promise<boolean> => {
     try {
@@ -201,7 +309,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         body: JSON.stringify({ token }),
       })
-      
+
       if (!response.ok) {
         throw new Error('Failed to verify CAPTCHA')
       }
@@ -214,26 +322,105 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [])
 
-
   const switchNetwork = useCallback(async () => {
-    if (typeof window !== 'undefined' && window.ethereum) {
-      try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: ETH_MAINNET_CHAIN_ID }],
-        })
-        setIsCorrectNetwork(true)
-      } catch (error: any) {
-        if (error.code === 4902) {
-          throw new Error("This wallet doesn't have Ethereum Mainnet added. Please add it manually and try again.")
+  }, [])
+
+  const showNetworkSwitchAlert = useCallback(() => {
+    setShowNetworkAlert(true)
+  }, [])
+
+  const hideNetworkSwitchAlert = useCallback(() => {
+    setShowNetworkAlert(false)
+  }, [])
+
+  useEffect(() => {
+    const initializeWallet = async () => {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        const isReady = await isWalletReady(window.ethereum)
+        if (isReady) {
+          const savedConnection = localStorage.getItem('walletConnection')
+          if (savedConnection) {
+            const { providerType } = JSON.parse(savedConnection)
+            connectWallet(providerType, true)
+          }
+          setupNetworkChangeListener()
         } else {
-          throw new Error("Failed to switch to the Ethereum Mainnet.")
+          console.log("Wallet is not ready yet. Retrying in 1 second...")
+          setTimeout(initializeWallet, 1000)
         }
       }
     }
-  }, [])
 
-  const contextValue = {
+    initializeWallet()
+
+    return () => {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        window.ethereum.removeAllListeners()
+      }
+    }
+  }, [connectWallet, isWalletReady, setupNetworkChangeListener])
+
+  useEffect(() => {
+    const fetchTheme = async () => {
+      if (address) {
+        try {
+          const response = await fetch(`/api/get-theme?address=${address}`)
+          const data = await response.json()
+          if (data.theme) {
+            setTheme(data.theme)
+          }
+        } catch (error) {
+          console.error('Failed to fetch theme:', error)
+        }
+      }
+    }
+
+    fetchTheme()
+  }, [address])
+
+  useEffect(() => {
+    const handleActivity = () => {
+      updateLastActivityTime() 
+      if (showDisconnectAlert) {
+        setShowDisconnectAlert(false) 
+      }
+      resetAutoDisconnectTimer()
+    }
+
+    if (isConnected) {
+      window.addEventListener('mousemove', handleActivity)
+      window.addEventListener('keydown', handleActivity)
+      return () => {
+        window.removeEventListener('mousemove', handleActivity)
+        window.removeEventListener('keydown', handleActivity)
+      }
+    }
+  }, [isConnected, isAutoDisconnectEnabled, updateLastActivityTime, resetAutoDisconnectTimer, showDisconnectAlert]) 
+
+  useEffect(() => {
+    const savedAutoDisconnect = localStorage.getItem('autoDisconnectEnabled')
+    if (savedAutoDisconnect === null) {
+      toggleAutoDisconnect(true) 
+      localStorage.setItem('autoDisconnectEnabled', 'true')
+    } else {
+      toggleAutoDisconnect(savedAutoDisconnect === 'true') 
+    }
+  }, [toggleAutoDisconnect])
+
+  useEffect(() => {
+    if (isConnected) {
+      resetAutoDisconnectTimer()
+    }
+
+    return () => {
+      if (disconnectTimerRef.current) {
+        clearTimeout(disconnectTimerRef.current)
+      }
+    }
+  }, [isConnected, isAutoDisconnectEnabled, resetAutoDisconnectTimer])
+
+
+  const contextValue: WalletContextType = {
     signer,
     address,
     isConnected,
@@ -242,10 +429,24 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     connectWallet,
     disconnectWallet,
     verifyCaptcha,
-    isCorrectNetwork,
+    isCorrectNetwork: false,
     switchNetwork,
     showSuccessAnimation,
-    setShowSuccessAnimation
+    setShowSuccessAnimation,
+    isAutoDisconnectEnabled,
+    toggleAutoDisconnect,
+    theme,
+    setTheme,
+    showDisconnectAnimation,
+    setShowDisconnectAnimation,
+    lastActivityTime: lastActivity,
+    updateLastActivityTime, 
+    showDisconnectAlert,
+    setShowDisconnectAlert,
+    resetAutoDisconnectTimer,
+    showNetworkAlert,
+    showNetworkSwitchAlert,
+    hideNetworkSwitchAlert,
   }
 
   return (

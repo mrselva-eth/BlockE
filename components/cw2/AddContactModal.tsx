@@ -11,9 +11,16 @@ export default function AddContactModal({ onClose, onAdd, isFullScreen = false }
   const [name, setName] = useState('')
   const [address, setAddress] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onAdd(name, address)
+    await onAdd(name, address)
+    // Reset form
+    setName('')
+    setAddress('')
+    // Close modal
+    onClose()
+    // Force a refresh of the contacts list by triggering a state update in the parent
+    window.dispatchEvent(new CustomEvent('refreshContacts'))
   }
 
   if (isFullScreen) {

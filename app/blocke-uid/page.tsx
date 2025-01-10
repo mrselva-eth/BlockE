@@ -25,8 +25,21 @@ export default function BlockEUIDPage() {
   const router = useRouter()
 
   useEffect(() => {
-    //Removed useEffect hook that was checking for UID ownership
-  }, [])
+    const checkUID = async () => {
+      if (isConnected && address) {
+        try {
+          const response = await fetch(`/api/verify-beuid?address=${address}`)
+          const data = await response.json()
+          setHasUID(data.hasUID)
+        } catch (error) {
+          console.error('Error checking BlockE UID:', error)
+          setError('Failed to check BlockE UID status')
+        }
+      }
+    }
+
+    checkUID()
+  }, [isConnected, address])
 
   useEffect(() => {
     if (!hasUID && activePage === 'Profile') {

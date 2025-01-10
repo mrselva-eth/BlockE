@@ -3,48 +3,373 @@ import { BE_TOKEN_ADDRESS, BE_TOKEN_ABI } from './beTokenABI'
 
 const CW2_TOKEN_MANAGER_ADDRESS = '0x8Be51a3AED4DBaC95D9db400af20D86D1f44789C'
 const CW2_TOKEN_MANAGER_ABI = [
-  {"inputs":[{"internalType":"address","name":"_beTokenAddress","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
-  {"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"OwnableInvalidOwner","type":"error"},
-  {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"OwnableUnauthorizedAccount","type":"error"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposit","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"sender","type":"address"},{"indexed":false,"internalType":"uint256","name":"cost","type":"uint256"}],"name":"EmojiReactionSent","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"creator","type":"address"},{"indexed":false,"internalType":"uint256","name":"cost","type":"uint256"}],"name":"GroupCreated","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"sender","type":"address"},{"indexed":false,"internalType":"uint256","name":"cost","type":"uint256"}],"name":"MessageSent","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Withdrawal","type":"event"},
-  {"inputs":[],"name":"EMOJI_REACTION_COST","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"GROUP_CREATION_COST","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"MESSAGE_COST","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"beToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"createGroup","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[],"name":"sendEmojiReaction","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[],"name":"sendMessage","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userBalances","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_beTokenAddress",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Deposit",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "cost",
+        "type": "uint256"
+      }
+    ],
+    "name": "EmojiReactionSent",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "cost",
+        "type": "uint256"
+      }
+    ],
+    "name": "GroupCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "cost",
+        "type": "uint256"
+      }
+    ],
+    "name": "MessageSent",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Withdrawal",
+    "type": "event"
+  },
+ {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "username",
+        "type": "string"
+      }
+    ],
+    "name": "register",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "EMOJI_REACTION_COST",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "GROUP_CREATION_COST",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MESSAGE_COST",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "beToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "createGroup",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "deposit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "getBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "sendEmojiReaction",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "sendMessage",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "userBalances",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
 ]
 
-function getContract() {
+let contractInstance: ethers.Contract | null = null; // Store the contract instance
+
+// RPC endpoints with fallback options
+const RPC_ENDPOINTS = [
+  'https://polygon-rpc.com',
+  'https://polygon.llamarpc.com',
+  'https://rpc-mainnet.maticvigil.com',
+  'https://polygon-mainnet.public.blastapi.io'
+];
+
+async function getContract() {
   if (typeof window.ethereum === 'undefined') {
     return Promise.reject(new Error('Ethereum object not found, install MetaMask.'))
   }
 
-  return window.ethereum.request({ method: 'eth_requestAccounts' })
-    .then(() => {
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      return provider.getSigner()
-    })
-    .then((signer: ethers.Signer) => {
-      return new ethers.Contract(CW2_TOKEN_MANAGER_ADDRESS, CW2_TOKEN_MANAGER_ABI, signer)
-    })
+  if (contractInstance) {
+    return contractInstance; // Return cached instance if available
+  }
+
+  try {
+    let provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner()
+    contractInstance = new ethers.Contract(CW2_TOKEN_MANAGER_ADDRESS, CW2_TOKEN_MANAGER_ABI, signer)
+    return contractInstance
+  } catch (error) {
+    console.error('Error initializing contract:', error)
+    throw new Error('Failed to initialize contract. Please make sure you are connected to the correct network and refresh the page.')
+  }
 }
 
 export async function getBalance(address: string): Promise<string> {
   const contract = await getContract()
+  if (!contract) {
+    throw new Error('Contract instance not available')
+  }
   const balance = await contract.getBalance(address)
   return ethers.formatEther(balance)
 }
@@ -85,25 +410,51 @@ export async function deposit(amount: string) {
 
 export async function withdraw(amount: string): Promise<void> {
   const contract = await getContract()
+  if (!contract) {
+    throw new Error('Contract instance not available')
+  }
   const tx = await contract.withdraw(ethers.parseEther(amount))
   await tx.wait()
 }
 
 export async function sendMessage(): Promise<void> {
   const contract = await getContract()
+  if (!contract) {
+    throw new Error('Contract instance not available')
+  }
   const tx = await contract.sendMessage()
   await tx.wait()
 }
 
 export async function createGroup(): Promise<void> {
   const contract = await getContract()
+  if (!contract) {
+    throw new Error('Contract instance not available')
+  }
   const tx = await contract.createGroup()
   await tx.wait()
 }
 
 export async function sendEmojiReaction(): Promise<void> {
   const contract = await getContract()
+  if (!contract) {
+    throw new Error('Contract instance not available')
+  }
   const tx = await contract.sendEmojiReaction()
   await tx.wait()
+}
+
+export async function register(username: string): Promise<void> {
+ try {
+   const contract = await getContract()
+   if (!contract) {
+     throw new Error('Contract instance not available')
+   }
+   const tx = await contract.register(username)
+   await tx.wait()
+ } catch (error) {
+   console.error('Error registering username:', error)
+   throw error
+ }
 }
 

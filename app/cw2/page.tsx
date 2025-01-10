@@ -13,6 +13,7 @@ import Image from 'next/image'
 import AddContactModal from '@/components/cw2/AddContactModal'; // Import the AddContactModal component
 import CreateGroupModal from '@/components/cw2/CreateGroupModal'; // Import CreateGroupModal
 import MembersListModal from '@/components/cw2/MembersListModal';
+import { withWalletProtection } from '@/components/withWalletProtection'
 
 interface Contact {
   _id: string;
@@ -28,7 +29,7 @@ interface Group {
   groupLogo?: string; // Add groupLogo property to the Group interface
 }
 
-export default function CW2Page() {
+function CW2Page() {
   const { isConnected, address } = useWallet()
   const [activeMenu, setActiveMenu] = useState<'contacts' | 'groups'>('contacts')
   const [showDepositWithdraw, setShowDepositWithdraw] = useState(false)
@@ -40,15 +41,38 @@ export default function CW2Page() {
   const [showMembersListModal, setShowMembersListModal] = useState(false);
   const [selectedGroupForMembers, setSelectedGroupForMembers] = useState<Group | null>(null);
 
-  const handleAddContact = (name: string, address: string) => {
-    const newContact: Contact = {
-      _id: Date.now().toString(), // Temporary ID, should be replaced with a proper ID from the backend
-      contactName: name,
-      contactAddress: address,
-    };
-    // Handle adding the new contact (implementation not provided in the prompt)
-    console.log("New contact added:", newContact);
-    setShowAddContact(false);
+  const handleAddContact = async (name: string, contactAddress: string) => {
+    if (!isConnected || !address) {
+      alert("Please connect your wallet first.");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/contacts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userAddress: address,
+          contactName: name,
+          contactAddress: contactAddress,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add contact');
+      }
+
+      // Close the modal
+      setShowAddContact(false);
+      
+      // Trigger a refresh of the contacts list
+      window.dispatchEvent(new CustomEvent('refreshContacts'));
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      alert('Failed to add contact. Please try again.');
+    }
   };
 
   const handleShowMembersList = (group: Group) => {
@@ -56,13 +80,6 @@ export default function CW2Page() {
     setShowMembersListModal(true);
   };
 
-  if (!isConnected) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <p className="text-lg text-gray-600">Please connect your wallet to access CW2</p>
-      </div>
-    )
-  }
 
   const handleMenuChange = (menu: 'contacts' | 'groups') => {
     setActiveMenu(menu)
@@ -83,14 +100,6 @@ export default function CW2Page() {
         <div className="flex-1 flex relative">
           {/* Background Image */}
           <div className="absolute inset-0 -z-10">
-            <Image
-              src="/cw2background.png"
-              alt="CW2 Background"
-              layout="fill"
-              objectFit="cover"
-              quality={100}
-              priority
-            />
           </div>
 
           <div className="w-80 bg-[#FAECFA] backdrop-blur-sm border-r border-purple-200 flex flex-col">
@@ -178,4 +187,6 @@ export default function CW2Page() {
     </div>
   )
 }
+
+export default withWalletProtection(CW2Page)
 

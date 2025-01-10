@@ -3,8 +3,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Home, LayoutDashboard, Coins, Binary, Bot, ArrowLeftRight, BarChart2, MessageCircle, Network, ImageIcon, FishIcon as Whale, FuelIcon as GasPump } from 'lucide-react'
+import { Menu, Home, LayoutDashboard, Coins, Binary, Bot, ArrowLeftRight, BarChart2, MessageCircle, Network, ImageIcon, FishIcon as Whale, FuelIcon as GasPump } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
+import { useRouter } from 'next/navigation'
+import BlockEUIDAlert from './BlockEUIDAlert'
+import { useBlockEUID } from '@/hooks/useBlockEUID'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
 
@@ -27,9 +31,11 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const { address } = useWallet()
   const pathname = usePathname()
+  const router = useRouter()
+  const { ownedUIDs, isLoading } = useBlockEUID()
+  const [showAlert, setShowAlert] = useState(false)
 
   const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
-
   const sidebarItems = allSidebarItems.filter(item => !item.ceoOnly || isCEO)
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
@@ -45,6 +51,14 @@ export default function Sidebar() {
     return () => window.removeEventListener('mousemove', handleMouseMove)
   }, [handleMouseMove])
 
+  const handleItemClick = (item: any) => {
+    if (!isLoading && ownedUIDs.length === 0 && item.name !== 'Home' && item.name !== 'BlockE UID') {
+      setShowAlert(true)
+    } else {
+      router.push(item.href)
+    }
+  }
+
   return (
     <>
       {!isOpen && (
@@ -57,7 +71,7 @@ export default function Sidebar() {
         </button>
       )}
       <div
-        className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-30 ${
+        className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out z-40 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         onMouseLeave={() => setIsOpen(false)}
@@ -66,12 +80,12 @@ export default function Sidebar() {
           <ul className="space-y-2">
             {sidebarItems.map((item) => (
               <li key={item.name}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center px-4 py-2 text-gray-700 rounded hover:bg-gray-100 hover:text-gray-900 transition-colors relative ${
+                <button
+                  onClick={() => handleItemClick(item)}
+                  className={`flex items-center px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors relative w-full text-left ${
                     pathname === item.href
-                      ? 'text-purple-600 font-semibold'
-                      : ''
+                      ? 'text-purple-600 dark:text-purple-400 font-semibold bg-gray-100 dark:bg-gray-800'
+                      : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
                   {item.icon && <item.icon className="mr-2 h-5 w-5" />}
@@ -79,12 +93,16 @@ export default function Sidebar() {
                   {pathname === item.href && (
                     <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-pink-500"></span>
                   )}
-                </Link>
+                </button>
               </li>
             ))}
           </ul>
         </nav>
+        <div className="absolute bottom-4 right-4">
+          <ThemeToggle />
+        </div>
       </div>
+      {showAlert && <BlockEUIDAlert />}
     </>
   )
 }

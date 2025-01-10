@@ -1,5 +1,6 @@
 import React from 'react'
 import { X } from 'lucide-react'
+import Image from 'next/image'
 
 interface TransactionRejectedMessageProps {
   onClose: () => void
@@ -15,6 +16,13 @@ const TransactionRejectedMessage: React.FC<TransactionRejectedMessageProps> = ({
         >
           <X size={24} className="text-indigo-600 hover:text-purple-600" />
         </button>
+        <Image
+          src="/rejected.gif"
+          alt="Transaction Rejected"
+          width={200}
+          height={200}
+          className="mx-auto mb-4"
+        />
         <h2 className="text-2xl font-bold mb-4 text-red-600 font-poppins">Transaction Rejected</h2>
         <p className="mb-6 text-gray-700">You have rejected the transaction in your wallet. Please try again if you wish to proceed.</p>
         <button

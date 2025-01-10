@@ -62,8 +62,8 @@ export default function GasSpent({ address }: { address: string }) {
         </h2>
 
         <div className="flex items-baseline gap-2">
-          <p className="text-3xl font-bold text-gray-900">{gasSpent}</p>
-          <p className="text-lg text-gray-600">ETH</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-gray-900">{gasSpent}</p>
+          <p className="text-lg text-gray-600 dark:text-gray-700">ETH</p>
         </div>
       </div>
     </div>

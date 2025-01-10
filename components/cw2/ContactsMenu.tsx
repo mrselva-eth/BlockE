@@ -12,7 +12,7 @@ interface Contact {
 interface ContactsMenuProps {
   onSelectContact: (contact: Contact) => void;
   selectedContact: Contact | null;
-  onShowAddContact: () => void; // Add this prop
+  onShowAddContact: () => void;
 }
 
 export default function ContactsMenu({ onSelectContact, selectedContact, onShowAddContact }: ContactsMenuProps) {
@@ -21,60 +21,35 @@ export default function ContactsMenu({ onSelectContact, selectedContact, onShowA
   const [showAddContact, setShowAddContact] = useState(false)
   const [contacts, setContacts] = useState<Contact[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const fetchContacts = useCallback(() => {
-    if (!address) return;
+  const fetchContacts = useCallback(async () => {
+    if (!address) return
 
-    fetch(`/api/contacts?userAddress=${address}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch contacts')
-        }
-        return response.json()
-      })
-      .then(fetchedContacts => {
-        setContacts(fetchedContacts)
-      })
-      .catch(err => {
-        console.error('Failed to fetch contacts:', err)
-        setError('Failed to load contacts. Please try again.')
-      })
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/contacts?userAddress=${address}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch contacts')
+      }
+      const fetchedContacts = await response.json()
+      setContacts(fetchedContacts)
+      setError(null)
+    } catch (err) {
+      console.error('Failed to fetch contacts:', err)
+      setError('Failed to load contacts. Please try again.')
+      setContacts([])
+    } finally {
+      setIsLoading(false)
+    }
   }, [address])
 
-  const truncateAddress = (addr: string) => {
-    return `${addr.slice(0, 5)}...${addr.slice(-3)}`
-  }
-
   useEffect(() => {
-    if (address) {
-      fetchContacts()
-    }
-  }, [address, fetchContacts])
+    fetchContacts()
+  }, [fetchContacts])
 
-  const handleAddContact = async (name: string, contactAddress: string) => {
-    try {
-      const response = await fetch('/api/contacts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userAddress: address,
-          contactName: name,
-          contactAddress: contactAddress,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to add contact')
-      }
-
-      setShowAddContact(false)
-      await fetchContacts()
-    } catch (err) {
-      console.error('Failed to add contact:', err)
-      setError('Failed to add contact. Please try again.')
-    }
+  const truncateAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-3)}`
   }
 
   const filteredContacts = contacts.filter(contact =>
@@ -103,41 +78,46 @@ export default function ContactsMenu({ onSelectContact, selectedContact, onShowA
         </button>
       </div>
       <div className="space-y-2 max-h-[calc(100vh-16rem)] overflow-y-auto contacts-scrollbar">
-        {filteredContacts.map((contact) => (
-          <div
-            key={contact._id}
-            className={`p-2 rounded-lg cursor-pointer transition-colors border-b border-gray-200 ${
-              selectedContact?._id === contact._id
-                ? 'bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-500'
-                : 'bg-white hover:bg-gray-50'
-            }`}
-            onClick={() => onSelectContact(contact)}
-          >
-            <p className="font-semibold">{contact.contactName}</p>
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-600">{truncateAddress(contact.contactAddress)}</p>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigator.clipboard.writeText(contact.contactAddress);
-                  // Show temporary success message
-                  const target = e.currentTarget;
-                  target.textContent = 'Copied!';
-                  setTimeout(() => {
-                    target.textContent = 'Copy';
-                  }, 2000);
-                }}
-                className="text-xs text-purple-600 hover:text-purple-700 px-2 py-1 rounded-md hover:bg-purple-50"
-              >
-                Copy
-              </button>
+        {isLoading ? (
+          <div className="text-center py-4 text-gray-500">Loading contacts...</div>
+        ) : error ? (
+          <div className="text-center py-4 text-red-500">{error}</div>
+        ) : filteredContacts.length > 0 ? (
+          filteredContacts.map((contact) => (
+            <div
+              key={contact._id}
+              className={`p-2 rounded-lg cursor-pointer transition-colors border-b border-gray-200 ${
+                selectedContact?._id === contact._id
+                  ? 'bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-500'
+                  : 'bg-white hover:bg-gray-50'
+              }`}
+              onClick={() => onSelectContact(contact)}
+            >
+              <p className="font-semibold">{contact.contactName}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600">{truncateAddress(contact.contactAddress)}</p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(contact.contactAddress);
+                    // Show temporary success message
+                    const target = e.currentTarget;
+                    target.textContent = 'Copied!';
+                    setTimeout(() => {
+                      target.textContent = 'Copy';
+                    }, 2000);
+                  }}
+                  className="text-xs text-purple-600 hover:text-purple-700 px-2 py-1 rounded-md hover:bg-purple-50"
+                >
+                  Copy
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <div className="text-center py-4 text-gray-500">No contacts found</div>
+        )}
       </div>
-      {error && (
-        <p className="text-red-500 mt-2 text-sm">{error}</p>
-      )}
     </div>
   )
 }

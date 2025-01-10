@@ -1,76 +1,94 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
-import { ethers } from 'ethers'
+import { useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
+import { useWallet } from '@/contexts/WalletContext'
 
-const ETH_CHAIN_ID = '0x1'
 const POLYGON_CHAIN_ID = '0x89'
 
 export default function NetworkSwitchAlert() {
-  const [showAlert, setShowAlert] = useState(false)
-  const [targetNetwork, setTargetNetwork] = useState<'Ethereum' | 'Polygon' | null>(null)
-  const pathname = usePathname()
+  const { showNetworkAlert, hideNetworkSwitchAlert } = useWallet()
+
+  const switchNetwork = async () => {
+    if (!window.ethereum) return
+
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: POLYGON_CHAIN_ID }],
+      })
+      hideNetworkSwitchAlert()
+    } catch (error) {
+      console.error('Failed to switch network:', error)
+    }
+  }
 
   useEffect(() => {
     const checkNetwork = async () => {
-      if (typeof window.ethereum !== 'undefined') {
-        const provider = new ethers.BrowserProvider(window.ethereum)
-        const network = await provider.getNetwork()
-        const chainId = '0x' + network.chainId.toString(16)
-
-        const requiredChainId = pathname === '/dashboard' ? ETH_CHAIN_ID : POLYGON_CHAIN_ID
-        const requiredNetwork = pathname === '/dashboard' ? 'Ethereum' : 'Polygon'
-
-        if (chainId !== requiredChainId) {
-          setTargetNetwork(requiredNetwork)
-          setShowAlert(true)
-        } else {
-          setShowAlert(false)
+      if (window.ethereum) {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+        if (chainId !== POLYGON_CHAIN_ID) {
+          // Show alert if not on Polygon network
+          // This will handle the case when user switches to a non-Polygon network
         }
       }
     }
 
     checkNetwork()
 
-    // Add event listener for network changes
     if (window.ethereum) {
       window.ethereum.on('chainChanged', checkNetwork)
-      return () => {
+    }
+
+    return () => {
+      if (window.ethereum) {
         window.ethereum.removeListener('chainChanged', checkNetwork)
       }
     }
-  }, [pathname])
+  }, [])
 
-  const handleSwitchNetwork = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: targetNetwork === 'Ethereum' ? ETH_CHAIN_ID : POLYGON_CHAIN_ID }],
-        })
-      } catch (error) {
-        console.error('Failed to switch network:', error)
-      }
-    }
-  }
-
-  if (!showAlert) return null
+  if (!showNetworkAlert) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <p className="text-lg font-medium text-gray-900 mb-4 font-poppins text-center">
-          Please switch to {targetNetwork} network
-        </p>
-        <button
-          onClick={handleSwitchNetwork}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-4 rounded-full transition-all duration-300 hover:from-purple-600 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-poppins"
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
         >
-          Switch to {targetNetwork}
-        </button>
-      </div>
-    </div>
+          <div className="text-center">
+            <Image
+              src="/polygon.png"
+              alt="Polygon logo"
+              width={80}
+              height={80}
+              className="mx-auto mb-6"
+            />
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Switch to Polygon Network
+            </h2>
+            <p className="text-gray-600 mb-6">
+              This application requires you to be connected to the Polygon network. 
+              Please switch your network to continue.
+            </p>
+            <button
+              onClick={switchNetwork}
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-4 rounded-full transition-all duration-300 transform hover:scale-105 hover:from-purple-600 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Switch to Polygon
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   )
 }
 

@@ -13,6 +13,7 @@ interface Token {
 export default function Portfolio({ address }: { address: string }) {
   const [tokens, setTokens] = useState<Token[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -33,6 +34,7 @@ export default function Portfolio({ address }: { address: string }) {
         }
       } catch (error) {
         console.error('Error fetching token list:', error)
+        setError('Failed to fetch token data')
       } finally {
         setIsLoading(false)
       }
@@ -44,13 +46,20 @@ export default function Portfolio({ address }: { address: string }) {
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse">
-        <div className="h-7 bg-gray-200 rounded w-1/3 mb-4"></div>
         <div className="h-48 bg-gray-200 rounded"></div>
       </div>
     )
   }
 
-  const COLORS = ['#8B5CF6', '#EC4899', '#3B82F6', '#10B981', '#F59E0B', '#6366F1']
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="text-center text-red-500">{error}</div>
+      </div>
+    )
+  }
+
+  const COLORS = ['#8B5CF6', '#EC4899', '#6366F1', '#10B981', '#F59E0B', '#EF4444']
 
   const data = tokens.map((token, index) => ({
     name: token.symbol,
@@ -84,17 +93,26 @@ export default function Portfolio({ address }: { address: string }) {
                   data={data}
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
+                  innerRadius={60}
+                  outerRadius={80}
                   fill="#8884d8"
+                  paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 >
                   {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend />
+                <Tooltip 
+                  formatter={(value: number, name: string) => [`${value.toFixed(4)}`, name]}
+                  contentStyle={{ background: 'rgba(255, 255, 255, 0.8)', borderRadius: '8px', border: 'none' }}
+                />
+                <Legend 
+                  layout="vertical" 
+                  align="right" 
+                  verticalAlign="middle"
+                  wrapperStyle={{ fontSize: '12px' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>

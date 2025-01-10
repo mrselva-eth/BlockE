@@ -2,9 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter, Space_Grotesk, Roboto_Mono, Poppins } from 'next/font/google'
 import { WalletProvider } from '@/contexts/WalletContext'
-import NavbarContent from '@/components/NavbarContent'
-import WalletComponentsWrapper from '@/components/WalletComponentsWrapper'
-import NetworkSwitchAlert from '@/components/NetworkSwitchAlert'
+import ClientLayout from './ClientLayout'
 
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', event => {
@@ -76,14 +74,9 @@ export default function RootLayout({
       </head>
       <body className={`${spaceGrotesk.variable} font-space-grotesk antialiased`}>
         <WalletProvider>
-          <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-50">
-            <NavbarContent />
-          </nav>
-          <WalletComponentsWrapper />
-          <main className="pt-16">
+          <ClientLayout>
             {children}
-          </main>
-          <NetworkSwitchAlert />
+          </ClientLayout>
         </WalletProvider>
         <script
           dangerouslySetInnerHTML={{
@@ -93,6 +86,13 @@ export default function RootLayout({
             `,
           }}
         />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            window.onload = function() {
+              window.scrollTo(0, 0);
+            }
+          `
+        }} />
       </body>
     </html>
   )

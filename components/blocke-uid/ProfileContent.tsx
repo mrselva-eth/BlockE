@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
-import { Instagram, Youtube, Linkedin, Edit2, Camera, Trash2, AlertCircle } from 'lucide-react'
+import { Instagram, Youtube, Linkedin, Edit2, Camera, Trash2, AlertCircle, Github, Twitter, DiscIcon as Discord } from 'lucide-react'
 import Image from 'next/image'
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
@@ -16,6 +16,10 @@ interface Profile {
   instagramLink?: string;
   youtubeLink?: string;
   linkedinLink?: string;
+  email?: string;
+  githubLink?: string;
+  twitterLink?: string;
+  discordUsername?: string;
 }
 
 interface ProfileContentProps {
@@ -97,8 +101,10 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
       })
 
       if (response.ok) {
-        await fetchProfile()
+        // Refetch profile data after successful save
+        await fetchProfile(); // Await the fetchProfile call
         setIsEditing(false)
+        setPreviewImage(null) // Reset preview image after saving
       } else {
         throw new Error('Failed to save profile')
       }
@@ -122,7 +128,7 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
         {profile.beuid && (
           <h1 className="text-3xl font-bold text-center mb-6">{profile.beuid}</h1>
         )}
-        
+
         {!isEditing ? (
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center gap-6">
@@ -169,6 +175,21 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
                       <Linkedin size={24} />
                     </a>
                   )}
+                  {profile.githubLink && (
+                    <a href={profile.githubLink} target="_blank" rel="noopener noreferrer" className="text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100">
+                      <Github size={24} />
+                    </a>
+                  )}
+                  {profile.twitterLink && (
+                    <a href={profile.twitterLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-500">
+                      <Twitter size={24} />
+                    </a>
+                  )}
+                  {profile.discordUsername && (
+                    <a href={`https://discord.com/users/${profile.discordUsername}`} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:text-indigo-600">
+                      <Discord size={24} />
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -180,9 +201,9 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSave} className="space-y-6">
-            <div className="flex items-start gap-8">
-              <div className="flex-shrink-0">
+          <form onSubmit={handleSave} className="grid grid-cols-2 gap-8 w-full">
+            <div className="space-y-6">
+              <div className="flex-shrink-0 mb-6">
                 <div className="relative">
                   <Image
                     src={previewImage || profile.profileImage || defaultImage}
@@ -213,8 +234,8 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
                 </div>
               </div>
 
-              <div className="flex-grow">
-                <div className="mb-4">
+              <div className="space-y-4">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
                   <input
                     type="text"
@@ -224,7 +245,7 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
                   />
                 </div>
 
-                <div className="mb-4">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
                   <textarea
                     name="bio"
@@ -234,50 +255,92 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
                   ></textarea>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
-                    <div className="flex items-center">
-                      <Instagram size={20} className="mr-2 text-pink-500" />
-                      <input
-                        type="text"
-                        name="instagramLink"
-                        defaultValue={profile.instagramLink}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">YouTube</label>
-                    <div className="flex items-center">
-                      <Youtube size={20} className="mr-2 text-red-500" />
-                      <input
-                        type="text"
-                        name="youtubeLink"
-                        defaultValue={profile.youtubeLink}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
-                    <div className="flex items-center">
-                      <Linkedin size={20} className="mr-2 text-blue-500" />
-                      <input
-                        type="text"
-                        name="linkedinLink"
-                        defaultValue={profile.linkedinLink}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    defaultValue={profile.email}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
                 </div>
               </div>
             </div>
-
-            <div className="flex justify-end gap-4">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
+                <div className="flex items-center">
+                  <Instagram size={20} className="mr-2 text-pink-500" />
+                  <input
+                    type="text"
+                    name="instagramLink"
+                    defaultValue={profile.instagramLink}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">YouTube</label>
+                <div className="flex items-center">
+                  <Youtube size={20} className="mr-2 text-red-500" />
+                  <input
+                    type="text"
+                    name="youtubeLink"
+                    defaultValue={profile.youtubeLink}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
+                <div className="flex items-center">
+                  <Linkedin size={20} className="mr-2 text-blue-500" />
+                  <input
+                    type="text"
+                    name="linkedinLink"
+                    defaultValue={profile.linkedinLink}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">GitHub</label>
+                <div className="flex items-center">
+                  <Github size={20} className="mr-2 text-gray-500" />
+                  <input
+                    type="text"
+                    name="githubLink"
+                    defaultValue={profile.githubLink}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Twitter</label>
+                <div className="flex items-center">
+                  <Twitter size={20} className="mr-2 text-gray-500" />
+                  <input
+                    type="text"
+                    name="twitterLink"
+                    defaultValue={profile.twitterLink}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Discord Username</label>
+                <div className="flex items-center">
+                  <Discord size={20} className="mr-2 text-gray-500" />
+                  <input
+                    type="text"
+                    name="discordUsername"
+                    defaultValue={profile.discordUsername}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="col-span-2 flex justify-end gap-4 mt-8">
               <button
                 type="button"
                 onClick={() => {
