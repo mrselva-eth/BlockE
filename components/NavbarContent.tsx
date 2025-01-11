@@ -19,6 +19,7 @@ import GasPriceDisplay from './GasPriceDisplay'
 import { useProfile } from '@/hooks/useProfile' // Import the hook
 import { useAutoDisconnect } from '@/hooks/useAutoDisconnect' // Import the hook
 import NavbarProfile from './NavbarProfile'; // Import NavbarProfile
+import ThemeToggle from '@/components/ThemeToggle' // Import ThemeToggle
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
 
@@ -49,6 +50,8 @@ const [profileImage, setProfileImage] = useState<string | null>(null)
 const { theme } = useTheme()
 const [polygonBalance, setPolygonBalance] = useState<string>('0.00')
 const [currentRpcIndex, setCurrentRpcIndex] = useState(0)
+const [rpcError, setRpcError] = useState<string | null>(null); // Add RPC error state
+const [showTooltip, setShowTooltip] = useState(false) // Add showTooltip state
 
 const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
@@ -190,18 +193,20 @@ const getNextRpcEndpoint = () => {
 }
 
 const fetchWithFallback = async (fetchFn: () => Promise<any>, attempts = 0): Promise<any> => {
-  try {
-    return await fetchFn()
-  } catch (error: any) {
-    if (error?.message?.includes('Too many requests') && attempts < RPC_ENDPOINTS.length) {
-      const nextEndpoint = getNextRpcEndpoint()
-      console.log(`Switching to RPC endpoint: ${nextEndpoint}`)
-      await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempts), 10000)))
-      return fetchWithFallback(fetchFn, attempts + 1)
+    try {
+      return await fetchFn();
+    } catch (error: any) {
+      if (attempts < RPC_ENDPOINTS.length -1) {
+        const nextEndpoint = getNextRpcEndpoint();
+        console.warn(`RPC endpoint ${RPC_ENDPOINTS[currentRpcIndex]} failed, trying next...`);
+        setRpcError(`RPC endpoint failed. Retrying with ${nextEndpoint}...`); // Set RPC error message
+        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempts), 10000))); // Exponential backoff with max delay
+        return fetchWithFallback(fetchFn, attempts + 1);
+      }
+      setRpcError('All RPC endpoints failed.'); // Set error message if all endpoints fail
+      throw error; // Re-throw the error after all attempts
     }
-    throw error
-  }
-}
+  };
 
 const fetchTokenBalance = async () => {
   if (!isConnected || !address) {
@@ -243,10 +248,15 @@ const fetchPolygonBalance = useCallback(async () => {
 
     try {
       const provider = new ethers.JsonRpcProvider(RPC_ENDPOINTS[currentRpcIndex]);
-      const balance = await fetchWithFallback(async () => {
-        return await provider.getBalance(address);
-      });
-      setPolygonBalance(ethers.formatEther(balance).slice(0, 4));
+
+      const balance = await fetchWithFallback(async () => provider.getBalance(address)); // Use fetchWithFallback
+
+      if (balance) { // Check if balance is valid before updating state
+        setPolygonBalance(ethers.formatEther(balance).slice(0, 6));
+        setRpcError(null); // Clear RPC error if successful
+      } else {
+        throw new Error('Invalid balance received from provider.');
+      }
     } catch (error) {
       console.error('Error fetching Polygon balance:', error);
       setPolygonBalance('0.00');
@@ -332,7 +342,7 @@ return (
             )}
             {isConnected && (
               <Fragment>
-                <div className="group relative ml-2"> {/* Added margin */}
+                <div className="group relative ml-2" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>
                   <button
                     className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors overflow-hidden"
                     onClick={() => toggleAutoDisconnect(!isAutoDisconnectEnabled)} // Use toggleAutoDisconnect from useWallet
@@ -343,10 +353,11 @@ return (
                       <Unlock size={20} className="text-gray-600 dark:text-gray-400" />
                     )}
                   </button>
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-1 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                    Auto-disconnect {isAutoDisconnectEnabled ? 'enabled' : 'disabled'}
-                    <div className="-bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
-                  </div>
+                  {showTooltip && (
+                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap">
+                      {isAutoDisconnectEnabled ? 'Disable' : 'Enable'} auto-disconnect
+                    </div>
+                  )}
                 </div>
               </Fragment>
             )}
@@ -364,7 +375,7 @@ return (
               className="rounded-full"
             />
             <span className="text-sm font-bold text-gray-800 dark:text-white" style={{ fontFamily: 'var(--font-poppins)' }}>
-              {polygonBalance} MATIC
+              {rpcError ? rpcError : `${polygonBalance} MATIC`}
             </span>
           </div>
           <GasPriceDisplay network="Polygon" />
@@ -384,6 +395,10 @@ return (
             </div>
           </div>
           <NotificationIcon size={24} />
+          <div className="group relative"> {/* Removed margin */}
+            <ThemeToggle /> {/* Add ThemeToggle here */}
+            
+          </div>
           <button 
             onClick={handleMintClick}
             className={`btn-23 ${theme === 'dark' ? 'bg-purple-700 hover:bg-purple-600' : ''}`}

@@ -9,6 +9,7 @@ import DashboardContent from '@/components/dashboard/DashboardContent'
 import { useWallet } from '@/contexts/WalletContext'
 import { withWalletProtection } from '@/components/withWalletProtection'
 import { useBlockEUID } from '@/hooks/useBlockEUID'
+import BlockEUIDList from '@/components/dashboard/BlockEUIDList';
 
 function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -44,35 +45,12 @@ function DashboardPage() {
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">
       <Sidebar />
-      <div className="flex-1 p-2">
+      <div className="flex-1 p-2 overflow-y-auto"> {/* Added overflow-y-auto to the main content area */}
         <div className="h-full">
           <div className="grid grid-cols-12 gap-2 h-full">
             {/* Left Column - BlockE UIDs */}
             <div className="col-span-2 h-full">
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3 shadow-lg h-full">
-                <h2 className="text-sm font-semibold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Your BlockE UIDs
-                </h2>
-                {ownedUIDs.length > 0 ? (
-                  <ul className="space-y-1">
-                    {ownedUIDs.map((uid) => (
-                      <li 
-                        key={uid.uid}
-                        className="text-purple-600 cursor-pointer hover:text-purple-800 text-xs truncate"
-                        onClick={() => {
-                          setSearchQuery(uid.formattedUid)
-                          setSearchedAddress(uid.address)
-                        }}
-                        title={uid.formattedUid}
-                      >
-                        {uid.formattedUid}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-600 text-xs">No BlockE UIDs found</p>
-                )}
-              </div>
+              <BlockEUIDList address={address || ''} /> {/* Pass address prop */}
             </div>
 
             {/* Right Column - Search and Content */}
@@ -108,7 +86,7 @@ function DashboardPage() {
         </div>
       </div>
       <SocialMediaLinks />
-      <div className="fixed inset-0 -z-10">
+      <div className="fixed inset-0 -z-10"> {/* Added fixed class to fix the background */}
         <Image
           src="/dashboard.jpg"
           alt="Dashboard Background"

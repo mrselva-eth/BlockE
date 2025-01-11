@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Check, X } from 'lucide-react'
+import { useWallet } from '@/contexts/WalletContext'
 
 export default function NewsletterSection() {
+  const { address } = useWallet() // Get connected wallet address
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
@@ -19,19 +21,23 @@ export default function NewsletterSection() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ 
+          email,
+          address // Include wallet address in request body
+        }),
       })
 
       if (!response.ok) {
-        throw new Error('Subscription failed')
+        const data = await response.json() // Get error message from response
+        throw new Error(data.error || 'Subscription failed')
       }
 
       setStatus('success')
       setMessage('Thanks for subscribing! Welcome to the BlockE community!')
       setEmail('')
-    } catch (error) {
+    } catch (error: any) { // Type error as any
       setStatus('error')
-      setMessage('Subscription failed. Please try again.')
+      setMessage(error.message || 'Subscription failed. Please try again.') // Use error message from the error object
     }
   }
 

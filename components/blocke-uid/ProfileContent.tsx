@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
-import { Instagram, Youtube, Linkedin, Edit2, Camera, Trash2, AlertCircle, Github, Twitter, DiscIcon as Discord } from 'lucide-react'
+import { Instagram, Youtube, Linkedin, Edit2, Camera, Trash2, AlertCircle, Github, Twitter } from 'lucide-react'
 import Image from 'next/image'
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
@@ -185,11 +185,6 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
                       <Twitter size={24} />
                     </a>
                   )}
-                  {profile.discordUsername && (
-                    <a href={`https://discord.com/users/${profile.discordUsername}`} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:text-indigo-600">
-                      <Discord size={24} />
-                    </a>
-                  )}
                 </div>
               </div>
             </div>
@@ -323,18 +318,6 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
                     type="text"
                     name="twitterLink"
                     defaultValue={profile.twitterLink}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Discord Username</label>
-                <div className="flex items-center">
-                  <Discord size={20} className="mr-2 text-gray-500" />
-                  <input
-                    type="text"
-                    name="discordUsername"
-                    defaultValue={profile.discordUsername}
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>

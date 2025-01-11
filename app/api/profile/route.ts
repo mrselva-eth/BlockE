@@ -26,7 +26,6 @@ export async function GET(request: Request) {
         linkedinLink: profile.linkedinLink,
         githubLink: profile.githubLink,
         twitterLink: profile.twitterLink,
-        discordUsername: profile.discordUsername
       } : null
     })
   } catch (error) {
@@ -47,7 +46,6 @@ export async function POST(request: Request) {
     const linkedinLink = formData.get('linkedinLink') as string
     const githubLink = formData.get('githubLink') as string
     const twitterLink = formData.get('twitterLink') as string
-    const discordUsername = formData.get('discordUsername') as string
     const profileImage = formData.get('profileImage') as File | null
 
     const client = await clientPromise
@@ -67,7 +65,6 @@ export async function POST(request: Request) {
       linkedin: linkedinLink,
       github: githubLink,
       twitter: twitterLink,
-      discord: discordUsername,
     };
 
     const beuidDoc = await db.collection('beuids').findOne({
@@ -86,7 +83,6 @@ export async function POST(request: Request) {
           linkedinLink: socialLinks.linkedin,
           githubLink: socialLinks.github,
           twitterLink: socialLinks.twitter,
-          discordUsername: socialLinks.discord,
           ...(profileImageString && { profileImage: profileImageString }),
           beuid: beuidDoc?.uid ? `${beuidDoc.uid}.BE` : undefined,
           socialLinks, // Also update the socialLinks object

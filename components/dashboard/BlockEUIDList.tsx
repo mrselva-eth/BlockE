@@ -1,5 +1,6 @@
 import { useBlockEUID } from '@/hooks/useBlockEUID'
 import { Loader } from 'lucide-react'
+import BEUIDCard from '@/components/blocke-uid/BEUIDCard';
 
 interface BlockEUIDListProps {
   address: string
@@ -10,7 +11,7 @@ export default function BlockEUIDList({ address }: BlockEUIDListProps) {
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 shadow-lg flex items-center justify-center h-24">
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 shadow-lg flex items-center justify-center h-full">
         <Loader className="animate-spin text-purple-500" size={24} />
       </div>
     )
@@ -25,18 +26,24 @@ export default function BlockEUIDList({ address }: BlockEUIDListProps) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 shadow-lg">
-      <h2 className="text-2xl font-semibold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Your BlockE UIDs</h2>
+    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3 shadow-lg h-full overflow-y-auto">
+      <h2 className="text-sm font-semibold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        Your BlockE UIDs
+      </h2>
       {ownedUIDs.length > 0 ? (
-        <ul className="space-y-1">
+        <div className="space-y-2">
           {ownedUIDs.map((uid) => (
-            <li key={uid.uid} className="text-purple-600">
-              {uid.formattedUid}
-            </li>
+            <BEUIDCard
+              key={uid.uid}
+              uid={uid.uid}
+              formattedUid={uid.formattedUid}
+              digits={uid.digits}
+              mintedAt={new Date()} // Provide a default date or fetch from the API
+            />
           ))}
-        </ul>
+        </div>
       ) : (
-        <p className="text-gray-600">No BlockE UIDs found</p>
+        <p className="text-gray-600 text-xs">No BlockE UIDs found</p>
       )}
     </div>
   )

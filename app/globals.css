@@ -95,6 +95,29 @@ scrollbar-width: thin;
 scrollbar-color: #e5e5e5 transparent;
 }
 
+/* Custom scrollbar for BlockEUIDList */
+.beuid-list-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.beuid-list-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.beuid-list-scrollbar::-webkit-scrollbar-thumb {
+  background: #e5e5e5;
+  border-radius: 3px;
+}
+
+.beuid-list-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #d4d4d4;
+}
+
+.beuid-list-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e5e5 transparent;
+}
+
 /* Hide Next.js development indicators */
 [data-nextjs-route-announcer],
 [data-next-route-announcer],
@@ -252,7 +275,6 @@ z-index: 1;
 display: grid;
 inset: 0;
 place-items: center;
-/* position: absolute; */ /* Remove this line */
 transition: opacity 0.2s ease;
 }
 
@@ -266,7 +288,7 @@ bottom: 0;
 background: linear-gradient(90deg, #ff00ff, #00ffff);
 opacity: 0;
 transition: opacity 0.3s ease;
-z-index: 0; /* Add z-index */
+z-index: 0;
 }
 
 .btn-23:hover::before {
