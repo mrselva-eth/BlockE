@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ethers } from 'ethers'
 import { BE_STAKING_ADDRESS, BE_STAKING_ABI } from '@/utils/beStakingABI'
 import { useWallet } from '@/contexts/WalletContext'
@@ -74,7 +74,10 @@ export default function StakingHistory({ onStakeUpdate, transactionPending, stak
  const stakesPerPage = 2
 
  const fetchStakes = useCallback(async () => {
-   if (!address) return;
+   if (!address || !ethers.isAddress(address)) { // Check if address is valid and exists
+     setIsLoading(false)
+     return
+   }
 
    setIsLoading(true);
    setError(null);
@@ -105,6 +108,9 @@ export default function StakingHistory({ onStakeUpdate, transactionPending, stak
        txHash: stakedEvents[index]?.transactionHash || '',
      }));
      
+     // Sort stakes by startTime in descending order (most recent first)
+     stakesWithTxHash.sort((a: Stake, b: Stake) => Number(b.startTime) - Number(a.startTime));
+
      setStakes(stakesWithTxHash);
    } catch (err) {
      console.error('Error fetching stakes:', err);

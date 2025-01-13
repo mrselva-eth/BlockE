@@ -10,6 +10,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ethers } from 'ethers'
 import { BLOCKE_UID_CONTRACT_ADDRESS, BLOCKE_UID_ABI } from '@/utils/blockEUIDContract'
+import { useTheme } from 'next-themes' // Import useTheme
 
 const pages = [
   { name: 'BlockE UID', icon: Wallet, component: BlockEUIDContent },
@@ -23,6 +24,7 @@ export default function BlockEUIDPage() {
   const [hasUID, setHasUID] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const { theme, setTheme } = useTheme(); // Get theme and setTheme
 
   useEffect(() => {
     const checkUID = async () => {
@@ -46,6 +48,17 @@ export default function BlockEUIDPage() {
       setActivePage('BlockE UID')
     }
   }, [hasUID, activePage])
+
+  useEffect(() => {
+    // Set theme to 'dark' on component mount
+    setTheme('dark');
+
+    return () => {
+      // Reset theme to user's preference when leaving the page
+      const userTheme = localStorage.getItem('theme') || 'light';
+      setTheme(userTheme);
+    };
+  }, [setTheme]); // Add setTheme to dependency array
 
   const handleUIDsFetched = (hasUID: boolean) => {
     setHasUID(hasUID);
@@ -118,7 +131,7 @@ export default function BlockEUIDPage() {
               </div>
             </div>
           )}
-          
+
           {
             <ActiveComponent hasUID={hasUID} onUIDsFetched={handleUIDsFetched} />
           }

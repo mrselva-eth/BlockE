@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const client = await clientPromise
     const db = client.db('blocke')
 
-    const user = await db.collection('users').findOne({ address: address.toLowerCase() })
+    const user = await db.collection('others').findOne({ address: address.toLowerCase() })
 
     if (user && user.theme) {
       return NextResponse.json({ theme: user.theme })

@@ -52,23 +52,23 @@ export default function MintModal({
           <div className="mb-6 text-left space-y-2">
             <p className="flex items-center">
               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
-              Governance rights in BlockE ecosystem
+              Used for minting BlockE UIDs
             </p>
             <p className="flex items-center">
               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
-              Access to premium features
+              Required for using BlockE AI
             </p>
             <p className="flex items-center">
               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
-              Staking rewards
+              Can be staked to earn rewards
             </p>
             <p className="flex items-center">
               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
-              Community membership benefits
+              Grants governance rights in the BlockE ecosystem
             </p>
             <p className="flex items-center">
               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
-              Future airdrops eligibility
+              Provides access to premium features and airdrops
             </p>
           </div>
 
@@ -132,7 +132,6 @@ export default function MintModal({
                     {isMinting ? 'Minting BE...' : needsPayment ? 'Mint BE (10 MATIC)' : 'Mint BE'}
                   </span>
                 </button>
-                <p className="text-xs text-gray-500 mt-2">You don&apos;t own any BEUIDs yet.</p>
                 </>
               )}
             </>

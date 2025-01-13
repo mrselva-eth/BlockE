@@ -365,7 +365,7 @@ function BEStaking() {
                       height={24}
                       className="rounded-full"
                     />
-                    <span className="text-lg font-medium">Overall Staked BE:</span>
+                    <span className="text-lg font-medium text-black dark:text-white">Overall Staked BE:</span>
                   </div>
                   <p className="text-3xl font-bold text-purple-600">
                     <AnimatedStatsNumber value={overallStaked} /> BE
@@ -382,7 +382,7 @@ function BEStaking() {
                       height={24}
                       className="rounded-full"
                     />
-                    <span className="text-lg font-medium">Overall Claimed BE:</span>
+                    <span className="text-lg font-medium text-black dark:text-white">Overall Claimed BE:</span>
                   </div>
                   <p className="text-3xl font-bold text-purple-600">
                     <AnimatedStatsNumber value={overallClaimed} /> BE
@@ -399,7 +399,7 @@ function BEStaking() {
                       height={24}
                       className="rounded-full"
                     />
-                    <span className="text-lg font-medium">Overall Unstaked BE:</span>
+                    <span className="text-lg font-medium text-black dark:text-white">Overall Unstaked BE:</span>
                   </div>
                   <p className="text-3xl font-bold text-purple-600">
                     <AnimatedStatsNumber value={overallUnstaked} /> BE
@@ -416,7 +416,7 @@ function BEStaking() {
                       height={24}
                       className="rounded-full"
                     />
-                    <span className="text-lg font-medium">Stake Count:</span>
+                    <span className="text-lg font-medium text-black dark:text-white">Stake Count:</span>
                   </div>
                   <p className="text-3xl font-bold text-purple-600">
                     {stakeCount}
@@ -433,7 +433,7 @@ function BEStaking() {
                       height={24}
                       className="rounded-full"
                     />
-                    <span className="text-lg font-medium">Claim Count:</span>
+                    <span className="text-lg font-medium text-black dark:text-white">Claim Count:</span>
                   </div>
                   <p className="text-3xl font-bold text-purple-600">
                     {claimCount}
@@ -450,7 +450,7 @@ function BEStaking() {
                       height={24}
                       className="rounded-full"
                     />
-                    <span className="text-lg font-medium">Unstake Count:</span>
+                    <span className="text-lg font-medium text-black dark:text-white">Unstake Count:</span>
                   </div>
                   <p className="text-3xl font-bold text-purple-600">
                     {unstakeCount}
@@ -467,7 +467,7 @@ function BEStaking() {
                       height={24}
                       className="rounded-full"
                     />
-                    <span className="text-lg font-medium">Your Staked BE:</span>
+                    <span className="text-lg font-medium text-black dark:text-white">Your Staked BE:</span>
                   </div>
                   <p className="text-3xl font-bold text-purple-600">
                     <AnimatedStatsNumber value={userOverallStaked} /> BE
@@ -484,7 +484,7 @@ function BEStaking() {
                       height={24}
                       className="rounded-full"
                     />
-                    <span className="text-lg font-medium">Your Claimed BE:</span>
+                    <span className="text-lg font-medium text-black dark:text-white">Your Claimed BE:</span>
                   </div>
                   <p className="text-3xl font-bold text-purple-600">
                     <AnimatedStatsNumber value={userOverallClaimed} /> BE
@@ -493,8 +493,8 @@ function BEStaking() {
               </div>
               <div className="col-span-8">
                 <div className="flex justify-between items-start mb-8">
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    BE Token Staking
+                 <h1 className="text-4xl font-bold text-black dark:text-black">
+                   BE Token Staking
                   </h1>
                   <APRInfoButton />
                 </div>
@@ -514,7 +514,7 @@ function BEStaking() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-center mb-8 gap-2 bg-white dark:bg-gray-800 rounded-xl p-4 border border-purple-200"> {/* Update 1 */}
+                <div className="flex items-center justify-center mb-8 gap-2 bg-white dark:bg-gray-800 rounded-xl p-4 border border-purple-200 text-black dark:text-white">
                   <Image
                     src="/blocke-logo.png"
                     alt="BE Token"
@@ -606,7 +606,7 @@ function BEStaking() {
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6"> {/* Update 2 */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-black dark:text-white">
                   <h2 className="text-2xl font-semibold mb-6 text-purple-600 dark:text-purple-400">Staking History</h2>
                   <StakingHistory onStakeUpdate={handleStakeUpdate} stakingData={stakingData} transactionPending={transactionPending} />
                 </div>

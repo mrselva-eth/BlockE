@@ -7,12 +7,13 @@ import { BE_TOKEN_ABI, BE_TOKEN_ADDRESS } from '@/utils/beTokenABI';
 import { ethers } from 'ethers';
 import Image from 'next/image';
 import { withWalletProtection } from '@/components/withWalletProtection';
-import { CheckCircle2, LogOutIcon as Logout } from 'lucide-react';
+import { CheckCircle2, LogOutIcon as Logout, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Gift } from 'lucide-react'
 import { useProfile } from '@/hooks/useProfile';
 import { useStakingData } from '@/hooks/useStakingData';
 import Sidebar from '@/components/Sidebar';
 import SocialMediaLinks from '@/components/SocialMediaLinks';
+import TransactionStatus from '@/components/TransactionStatus';
 
 interface Task {
   title: string;
@@ -32,6 +33,10 @@ const BEDrop: React.FC = () => {
   const [hasClaimedFreeBE, setHasClaimedFreeBE] = useState(false);
   const { profileData } = useProfile(address);
   const { stakingData } = useStakingData(address);
+  const [showClaimButton, setShowClaimButton] = useState(false); // State for claim button visibility
+  const [isClaiming, setIsClaiming] = useState(false); // State for claim button loading
+  const [claimTransaction, setClaimTransaction] = useState<{ hash: string; status: 'pending' | 'success' | 'error' } | null>(null);
+  const [showTransactionStatus, setShowTransactionStatus] = useState(false);
 
 
   const checkFreeBEMinted = useCallback(async () => {
@@ -634,6 +639,49 @@ const BEDrop: React.FC = () => {
     }
   };
 
+  const handleClaimAirdrop = async () => {
+    if (!address || airdropBalance <= 0) return;
+
+    setIsClaiming(true);
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const beTokenContract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, signer);
+
+      const tx = await beTokenContract.mintForOwner(ethers.parseEther(airdropBalance.toString()));
+      setClaimTransaction({ hash: tx.hash, status: 'pending' }); // Set transaction hash and status
+      setShowTransactionStatus(true);
+
+      await tx.wait();
+      setClaimTransaction({ hash: tx.hash, status: 'success' }); // Update status to success
+      setTimeout(() => setShowTransactionStatus(false), 3000); // Hide after 3 seconds
+      setAirdropBalance(0);
+      await refreshBalance(); // Refresh token balance after claim
+    } catch (error: any) {
+      console.error('Error claiming airdrop:', error);
+      setClaimTransaction({ hash: claimTransaction?.hash || '', status: 'error' }); // Update status to error
+      if (error && error.message) {
+        alert(error.message);
+      } else {
+        alert('Failed to claim BE. Please try again.');
+      }
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
+  const refreshBalance = async () => {
+    if (!address) return;
+    try {
+      const provider = new ethers.JsonRpcProvider('https://polygon-rpc.com');
+      const contract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, provider);
+      const balance = await contract.balanceOf(address);
+      setAirdropBalance(Number(ethers.formatUnits(balance, 18)));
+    } catch (error) {
+      console.error("Error refreshing balance:", error);
+    }
+  };
+
   if (!isConnected) {
     return <div>Connect your wallet to participate in the BE airdrop.</div>;
   }
@@ -655,8 +703,12 @@ const BEDrop: React.FC = () => {
         </div>
 
         <div className="relative z-10 flex flex-col items-center justify-center p-8 mx-auto w-full">
-          <div className="bg-gradient-to-r from-blockchain-blue via-purple-600 to-pink-500 p-[2px] rounded-2xl mb-8">
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-lg flex items-center gap-4">
+          <div
+            className="relative group bg-gradient-to-r from-blockchain-blue via-purple-600 to-pink-500 p-[2px] rounded-2xl mb-8 transition-all duration-300"
+            onMouseEnter={() => setShowClaimButton(true)}
+            onMouseLeave={() => setShowClaimButton(false)}
+          >
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-lg flex items-center gap-4 transition-opacity duration-300 group-hover:opacity-0">
               <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-400 to-pink-400">
                 <Gift className="w-6 h-6 text-white" />
               </div>
@@ -667,7 +719,26 @@ const BEDrop: React.FC = () => {
                 </p>
               </div>
             </div>
+            <button
+              onClick={handleClaimAirdrop}
+              disabled={isClaiming}
+              className={`absolute inset-0 w-full h-full rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 transition-all duration-300 transform hover:scale-105 group-hover:opacity-100 opacity-0 ${
+                isClaiming ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+              }`}
+            >
+              {isClaiming ? 'Claiming...' : 'Claim'}
+            </button>
           </div>
+
+          <button
+            onClick={() => {
+              // Implement refresh logic here, e.g., refetch data
+              console.log('Refresh clicked');
+            }}
+            className="absolute top-8 right-8 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
+          >
+            <RefreshCw size={24} className="text-gray-600 dark:text-gray-400" />
+          </button>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full"> {/* Updated grid columns */}
             {tasks.map((task, index) => (
@@ -701,6 +772,21 @@ const BEDrop: React.FC = () => {
               </div>
             ))}
           </div>
+          {showTransactionStatus && claimTransaction && ( // Conditionally render based on showTransactionStatus
+            <TransactionStatus
+              isProcessing={claimTransaction.status === 'pending'}
+              isCompleted={claimTransaction.status === 'success'}
+              message={
+                claimTransaction.status === 'pending'
+                  ? 'Claiming BE...'
+                  : claimTransaction.status === 'success'
+                  ? 'Claim successful!'
+                  : 'Claim failed. Please try again.'
+              }
+              onClose={() => setClaimTransaction(null)}
+              isCornerNotification
+            />
+          )}
         </div>
       </div>
       <SocialMediaLinks />
