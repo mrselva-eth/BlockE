@@ -32,12 +32,18 @@ export default function DepositWithdrawModal({ onClose }: DepositWithdrawModalPr
 
   const fetchTransactions = useCallback(async () => {
     try {
-      const response = await fetch(`/api/transactions?address=${address}&page=${currentPage}&limit=2`)
+      const response = await fetch(`/api/cw2?address=${address}&page=${currentPage}&limit=2`)
       const data = await response.json()
-      setTransactions(data.transactions)
-      setTotalPages(Math.ceil(data.total / 2))
+      if (data.success) {
+        setTransactions(data.actions)
+        setTotalPages(Math.ceil(data.totalCount / 2))
+      } else {
+        console.error('Failed to fetch CW2 transactions:', data.error)
+        setError('Failed to fetch transactions. Please try again later.')
+      }
     } catch (err) {
-      console.error('Failed to fetch transactions:', err)
+      console.error('Failed to fetch CW2 transactions:', err)
+      setError('Failed to fetch transactions. Please try again later.')
     }
   }, [address, currentPage])
 
@@ -50,11 +56,29 @@ export default function DepositWithdrawModal({ onClose }: DepositWithdrawModalPr
     setError(null)
     setIsProcessing(true)
     try {
+      let txHash: string;
       if (mode === 'deposit') {
-        await deposit(amount)
+        txHash = await deposit(amount)
       } else {
-        await withdraw(amount)
+        txHash = await withdraw(amount)
       }
+
+      const response = await fetch('/api/cw2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: address!.toLowerCase(),
+          type: mode,
+          amount: parseFloat(amount),
+          txHash: txHash,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to record transaction')
+      }
+
       setIsProcessing(false)
       setIsCompleted(true)
       setTimeout(() => {

@@ -18,10 +18,22 @@ export default function NavbarProfile() {
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
-  const handleLogout = () => {
-    disconnectWallet()
-    setShowDropdown(false)
-  }
+  const handleLogout = async () => {
+    if (address) {
+      try {
+        await fetch('/api/others', { // Update API endpoint
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address, action: 'logout' }),
+        });
+      } catch (error) {
+        console.error('Error logging out:', error);
+      }
+    }
+
+    disconnectWallet();
+    setShowDropdown(false);
+  };
 
   const truncate = (str: string | undefined, len: number) => {
     if (!str) return ''

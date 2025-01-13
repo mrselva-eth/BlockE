@@ -28,7 +28,9 @@ export default function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false)
   const [animatedContent, setAnimatedContent] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [commandUsed, setCommandUsed] = useState(false);
   const [showCommandList, setShowCommandList] = useState(false)
+  const [commandCount, setCommandCount] = useState(0)
   const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
   const scrollToBottom = useCallback(() => {
@@ -86,6 +88,7 @@ export default function ChatInterface() {
 
   const handleCryptoCommand = async (command: string) => {
     const parts = command.split(' ')
+    setCommandUsed(true); // Set commandUsed to true when a command is used
     const action = parts[0].toLowerCase()
 
     try {
@@ -141,6 +144,7 @@ export default function ChatInterface() {
     setMessages(prev => [...prev, userMessage])
     setInput('')
 
+    const isCommand = userMessage.content.startsWith('/')
     try {
       const cryptoResponse = await handleCryptoCommand(input)
       
@@ -176,6 +180,7 @@ export default function ChatInterface() {
         throw new Error('Failed to fetch response')
       }
 
+      let botContent = ''
       if (response.body) {
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
@@ -198,7 +203,22 @@ export default function ChatInterface() {
         setIsTyping(true)
         await animateTyping(aiMessage.content)
         setIsTyping(false)
+        botContent = aiMessage.content
       }
+
+      
+      const isCommand = userMessage.content.startsWith('/')
+      setCommandCount(prevCount => isCommand ? prevCount + 1 : prevCount)
+
+      await fetch('/api/beai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userAddress: address,
+          messages: [{ inputMessage: userMessage.content, outputMessage: botContent }],
+          commandUsage: { used: isCommand || commandUsed, count: isCommand ? 1 : 0 },
+        }),
+      })
 
       await deductToken()
       await refreshBalance()
@@ -207,6 +227,7 @@ export default function ChatInterface() {
       setError('An error occurred while fetching the response. Please try again.')
     } finally {
       setIsLoading(false)
+      setCommandUsed(false); // Reset commandUsed after handling the message
       setIsTyping(false)
     }
   }

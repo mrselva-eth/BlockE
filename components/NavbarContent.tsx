@@ -34,7 +34,7 @@ const RPC_ENDPOINTS = [
 ]
 
 export default function NavbarContent() {
-const { isConnected, address, disconnectWallet, isAutoDisconnectEnabled, toggleAutoDisconnect } = useWallet() // Access isAutoDisconnectEnabled and toggleAutoDisconnect
+const { isConnected, address, disconnectWallet, isAutoDisconnectEnabled, toggleAutoDisconnect, theme } = useWallet() // Access isAutoDisconnectEnabled and toggleAutoDisconnect
 const [showDropdown, setShowDropdown] = useState(false)
 const dropdownRef = useRef<HTMLDivElement>(null)
 const [showMintModal, setShowMintModal] = useState(false)
@@ -47,11 +47,12 @@ const [showTransactionRejected, setShowTransactionRejected] = useState(false)
 const [tokenBalance, setTokenBalance] = useState<string>('0')
 const pathname = usePathname();
 const [profileImage, setProfileImage] = useState<string | null>(null)
-const { theme } = useTheme()
 const [polygonBalance, setPolygonBalance] = useState<string>('0.00')
 const [currentRpcIndex, setCurrentRpcIndex] = useState(0)
 const [rpcError, setRpcError] = useState<string | null>(null); // Add RPC error state
 const [showTooltip, setShowTooltip] = useState(false) // Add showTooltip state
+const [isOpen, setIsOpen] = useState(false); // Add isOpen state
+
 
 const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
 
@@ -297,6 +298,14 @@ useEffect(() => {
     return () => clearInterval(intervalId);
   }, [fetchPolygonBalance, isConnected, address]);
 
+
+const handleMouseMove = (event: MouseEvent) => {
+   if (event.clientX < 50) {
+     setIsOpen(true);
+   } else if (event.clientX > 300) { // give more space when closing
+     setIsOpen(false);
+   }
+ };
 
 return (
   <>

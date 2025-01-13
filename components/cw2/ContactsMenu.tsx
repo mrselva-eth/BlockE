@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Search, Plus } from 'lucide-react'
+import { Search, Plus, AlertCircle } from 'lucide-react'
 import AddContactModal from './AddContactModal'
 import { useWallet } from '@/contexts/WalletContext'
 
@@ -27,18 +27,21 @@ export default function ContactsMenu({ onSelectContact, selectedContact, onShowA
     if (!address) return
 
     setIsLoading(true)
+    setError(null) // Reset error state before fetching
+
     try {
       const response = await fetch(`/api/contacts?userAddress=${address}`)
       if (!response.ok) {
-        throw new Error('Failed to fetch contacts')
+        const errorData = await response.json() // Attempt to parse error data
+        const errorMessage = errorData?.error || 'Failed to fetch contacts'
+        throw new Error(errorMessage) // Throw error with message from server if available
       }
       const fetchedContacts = await response.json()
       setContacts(fetchedContacts)
-      setError(null)
-    } catch (err) {
+    } catch (err: any) { // Type error as any
       console.error('Failed to fetch contacts:', err)
-      setError('Failed to load contacts. Please try again.')
-      setContacts([])
+      setError(err.message || 'Failed to load contacts. Please try again.') // Use error message from error object
+      setContacts([]) // Clear contacts if there's an error
     } finally {
       setIsLoading(false)
     }
@@ -46,6 +49,13 @@ export default function ContactsMenu({ onSelectContact, selectedContact, onShowA
 
   useEffect(() => {
     fetchContacts()
+    const refreshListener = () => {
+      fetchContacts();
+    };
+    window.addEventListener('refreshContacts', refreshListener);
+    return () => {
+      window.removeEventListener('refreshContacts', refreshListener);
+    };
   }, [fetchContacts])
 
   const truncateAddress = (addr: string) => {
@@ -56,6 +66,35 @@ export default function ContactsMenu({ onSelectContact, selectedContact, onShowA
     contact.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.contactAddress.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const handleAddContact = async (contact: Contact) => {
+    try {
+      const response = await fetch('/api/contacts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userAddress: address,
+          contactName: contact.contactName,
+          contactAddress: contact.contactAddress,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add contact');
+      }
+
+      // Close the modal and refresh contacts
+      setShowAddContact(false);
+      window.dispatchEvent(new CustomEvent('refreshContacts')); // Refresh the contact list
+      await fetchContacts(); // Await the fetchContacts call
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      alert('Failed to add contact. Please try again.');
+    }
+  };
+
 
   return (
     <div className="p-4 bg-[#FAECFA]">
@@ -81,7 +120,10 @@ export default function ContactsMenu({ onSelectContact, selectedContact, onShowA
         {isLoading ? (
           <div className="text-center py-4 text-gray-500">Loading contacts...</div>
         ) : error ? (
-          <div className="text-center py-4 text-red-500">{error}</div>
+          <div className="p-4 rounded-md bg-red-50 flex items-center gap-x-2">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
         ) : filteredContacts.length > 0 ? (
           filteredContacts.map((contact) => (
             <div
@@ -118,6 +160,14 @@ export default function ContactsMenu({ onSelectContact, selectedContact, onShowA
           <div className="text-center py-4 text-gray-500">No contacts found</div>
         )}
       </div>
+      {showAddContact && (
+        <AddContactModal
+          onClose={() => setShowAddContact(false)}
+          onAdd={(name, address) => handleAddContact({ contactName: name, contactAddress: address } as Contact)}
+          isFullScreen={true}
+          contacts={contacts}
+        />
+      )}
     </div>
   )
 }

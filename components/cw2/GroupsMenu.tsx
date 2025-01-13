@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, Users, Upload, AlertCircle } from 'lucide-react'
+import { Search, Plus, Users, Upload, AlertCircle, Trash2 } from 'lucide-react'
 import MembersListModal from './MembersListModal'
 import { useWallet } from '@/contexts/WalletContext'
-import { createGroup as createGroupOnChain, getBalance } from '@/utils/cw2ContractInteractions'
+import { createGroup as createGroupOnChain, getBalance, deleteGroup } from '@/utils/cw2ContractInteractions'
 import { ethers } from 'ethers'
 import Image from 'next/image'
 import ExceptionMessage from './ExceptionMessage'
@@ -21,7 +21,7 @@ interface GroupsMenuProps {
   onSelectGroup: (group: Group) => void;
   selectedGroup: Group | null;
   onShowCreateGroup: () => void;
-  onShowMembersList: (group: Group) => void;  // Add this line
+  onShowMembersList: (group: Group) => void;
 }
 
 export default function GroupsMenu({ onSelectGroup, selectedGroup, onShowCreateGroup, onShowMembersList }: GroupsMenuProps) {
@@ -105,7 +105,7 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup, onShowCreateG
       setExceptionMessage("Only group creators can view member details")
     } else {
       setSelectedGroupForMembers(group)
-      onShowMembersList(group)  // Add this prop to the component
+      onShowMembersList(group)
     }
   }
 
@@ -143,6 +143,22 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup, onShowCreateG
       setError('Failed to upload logo. Please try again.')
     } finally {
       setUploading(false)
+    }
+  }
+
+  const handleDeleteGroup = async (groupId: string) => {
+    try {
+      await deleteGroup(groupId)
+      const response = await fetch(`/api/groups/${groupId}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        throw new Error('Failed to delete group from database')
+      }
+      fetchGroups()
+    } catch (error: any) {
+      console.error('Failed to delete group:', error)
+      setError(error.message || 'Failed to delete group. Please try again.')
     }
   }
 
@@ -184,7 +200,7 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup, onShowCreateG
             }`}
             onClick={() => onSelectGroup(group)}
           >
-            <div className="flex items-center gap-2">
+            <div className="relative flex items-center gap-2">
               {group.groupLogo ? (
                 <Image
                   src={group.groupLogo}
@@ -210,6 +226,17 @@ export default function GroupsMenu({ onSelectGroup, selectedGroup, onShowCreateG
                   </button>
                 </div>
               </div>
+              {group.creatorAddress.toLowerCase() === address?.toLowerCase() && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDeleteGroup(group._id)
+                  }}
+                  className="absolute top-2 right-2 p-1 rounded-full hover:bg-red-100 text-red-600"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
             </div>
           </div>
         ))}

@@ -100,6 +100,14 @@ function CW2Page() {
         <div className="flex-1 flex relative">
           {/* Background Image */}
           <div className="absolute inset-0 -z-10">
+            <Image
+              src="/cw2background.png"
+              alt="CW2 Background"
+              layout="fill"
+              objectFit="cover"
+              quality={100}
+              priority
+            />
           </div>
 
           <div className="w-80 bg-[#FAECFA] backdrop-blur-sm border-r border-purple-200 flex flex-col">

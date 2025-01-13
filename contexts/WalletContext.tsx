@@ -17,7 +17,7 @@ interface WalletContextType {
   showSuccessAnimation: boolean
   setShowSuccessAnimation: (show: boolean) => void
   isAutoDisconnectEnabled: boolean
-  toggleAutoDisconnect: (enabled: boolean) => void
+  toggleAutoDisconnect: (enabled: boolean) => Promise<void>
   theme: string
   setTheme: (theme: string) => void
   showDisconnectAnimation: boolean
@@ -70,10 +70,53 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     [lastActivity]
   )
 
-  const toggleAutoDisconnect = useCallback((newValue: boolean) => {
-    setIsAutoDisconnectEnabled(newValue);
-    localStorage.setItem('autoDisconnectEnabled', newValue.toString())
-  }, [])
+  const resetAutoDisconnectTimer = useCallback(
+    (callback?: () => void) => {
+      if (disconnectTimerRef.current) {
+        clearTimeout(disconnectTimerRef.current);
+      }
+
+      if (isAutoDisconnectEnabled && isConnected) {
+        disconnectTimerRef.current = startTimer(() => {
+          if (isAutoDisconnectEnabled && isConnected) {
+            setShowDisconnectAlert(true);
+            if (callback) {
+              callback();
+            }
+          }
+        });
+      }
+    },
+    [isAutoDisconnectEnabled, isConnected, setShowDisconnectAlert, startTimer]
+  );
+
+  const toggleAutoDisconnect = useCallback(async (enabled: boolean) => {
+    if (!address) return
+
+    try {
+      const response = await fetch('/api/update-preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, autoDisconnect: enabled, theme }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update preferences')
+      }
+
+      setIsAutoDisconnectEnabled(enabled)
+      localStorage.setItem('autoDisconnectEnabled', JSON.stringify(enabled))
+
+      if (enabled) {
+        resetAutoDisconnectTimer();
+      } else if (disconnectTimerRef.current) {
+        clearTimeout(disconnectTimerRef.current);
+      }
+    } catch (error) {
+      console.error('Error updating auto-disconnect preference:', error)
+      // Handle the error, potentially revert the toggle or display a message
+    }
+  }, [address, theme])
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null
@@ -96,25 +139,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     resetTimer() 
   }, [resetTimer])
 
-  const resetAutoDisconnectTimer = useCallback(
-    (callback?: () => void) => {
-      if (disconnectTimerRef.current) {
-        clearTimeout(disconnectTimerRef.current)
-      }
-
-      if (isAutoDisconnectEnabled && isConnected) {
-        disconnectTimerRef.current = startTimer(async () => { 
-          if (isAutoDisconnectEnabled && isConnected) {
-            setShowDisconnectAlert(true)
-            if (callback) {
-              await callback()
-            }
-          }
-        })
-      }
-    },
-    [isAutoDisconnectEnabled, isConnected, setShowDisconnectAlert, startTimer] 
-  )
 
   const checkNetwork = useCallback(async (provider: any) => {
     if (provider.request) {
@@ -399,13 +423,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     const savedAutoDisconnect = localStorage.getItem('autoDisconnectEnabled')
-    if (savedAutoDisconnect === null) {
-      toggleAutoDisconnect(true) 
-      localStorage.setItem('autoDisconnectEnabled', 'true')
-    } else {
-      toggleAutoDisconnect(savedAutoDisconnect === 'true') 
+    if (savedAutoDisconnect !== null) {
+      setIsAutoDisconnectEnabled(JSON.parse(savedAutoDisconnect))
     }
-  }, [toggleAutoDisconnect])
+  }, [])
 
   useEffect(() => {
     if (isConnected) {

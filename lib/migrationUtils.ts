@@ -1,5 +1,6 @@
 import { MongoClient, Db } from 'mongodb'
 import { BlockEUser } from '@/types/database'
+import { CW2Data, CW2Action } from '@/types/cw2'
 
 export async function migrateToNewSchema() {
   console.log('Starting migration...')
@@ -25,6 +26,7 @@ export async function migrateToNewSchema() {
     await migrateSearches(db)
     await migrateTransactions(db)
     await migrateBEUIDs(db)
+    await migrateCW2Transactions(db)
 
     console.log('Migration completed successfully')
   } catch (error: any) {
@@ -322,5 +324,35 @@ async function migrateBEUIDs(db: Db) {
     )
   }
   console.log(`Migrated ${beuids.length} BEUIDs`)
+}
+
+async function migrateCW2Transactions(db: Db) {
+  console.log('Migrating CW2 transactions...')
+  const transactionsCollection = db.collection('transactions')
+  const cw2Collection = db.collection<CW2Data>('cw2')
+
+  const cw2Transactions = await transactionsCollection.find({ type: { $in: ['deposit', 'withdraw'] } }).toArray()
+
+  for (const transaction of cw2Transactions) {
+    const action: CW2Action = {
+      type: transaction.type as 'deposit' | 'withdraw',
+      transactionHash: transaction.txHash,
+      amount: transaction.amount,
+      timestamp: transaction.timestamp,
+    }
+
+    await cw2Collection.updateOne(
+      { userAddress: transaction.address.toLowerCase() },
+      {
+        $inc: {
+          [`${transaction.type}Count`]: 1,
+        },
+        $push: { actions: action },
+      },
+      { upsert: true }
+    )
+  }
+
+  console.log(`Migrated ${cw2Transactions.length} CW2 transactions`)
 }
 

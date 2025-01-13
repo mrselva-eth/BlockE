@@ -332,6 +332,19 @@ const CW2_TOKEN_MANAGER_ABI = [
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "groupId",
+        "type": "string"
+      }
+    ],
+    "name": "deleteGroup",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ]
 
@@ -374,7 +387,7 @@ export async function getBalance(address: string): Promise<string> {
   return ethers.formatEther(balance)
 }
 
-export async function deposit(amount: string) {
+export async function deposit(amount: string): Promise<string> { // Return tx hash
   if (typeof window.ethereum === 'undefined') {
     throw new Error('Ethereum object not found, install MetaMask.')
   }
@@ -383,7 +396,7 @@ export async function deposit(amount: string) {
   const provider = new ethers.BrowserProvider(window.ethereum)
   const signer = await provider.getSigner()
   const contract = new ethers.Contract(CW2_TOKEN_MANAGER_ADDRESS, CW2_TOKEN_MANAGER_ABI, signer)
-  
+
   try {
     const beTokenAddress = await contract.beToken()
     const tokenContract = new ethers.Contract(beTokenAddress, BE_TOKEN_ABI, signer)
@@ -391,6 +404,7 @@ export async function deposit(amount: string) {
     await approveTx.wait()
     const depositTx = await contract.deposit(ethers.parseEther(amount))
     await depositTx.wait()
+    return depositTx.hash // Return the transaction hash
   } catch (error: any) {
     console.error('Deposit error:', error)
     if (error.reason) {
@@ -408,43 +422,63 @@ export async function deposit(amount: string) {
   }
 }
 
-export async function withdraw(amount: string): Promise<void> {
+export async function withdraw(amount: string): Promise<string> { // Return tx hash
   const contract = await getContract()
   if (!contract) {
     throw new Error('Contract instance not available')
   }
-  const tx = await contract.withdraw(ethers.parseEther(amount))
-  await tx.wait()
+  try {
+    const withdrawTx = await contract.withdraw(ethers.parseEther(amount))
+    await withdrawTx.wait()
+    return withdrawTx.hash // Return the transaction hash
+  } catch (error: any) {
+    console.error('Withdrawal error:', error)
+    if (error.reason) {
+      throw new Error(`Withdrawal failed: ${error.reason}`)
+    } else if (error.data) {
+      try {
+        const decodedError = contract.interface.parseError(error.data)
+        throw new Error(`Withdrawal failed: ${decodedError?.name || 'Unknown error'}`)
+      } catch {
+        throw new Error('Withdrawal failed: Unknown error')
+      }
+    } else {
+      throw new Error('Withdrawal failed: Unknown error')
+    }
+  }
 }
 
-export async function sendMessage(): Promise<void> {
+export async function sendMessage(): Promise<string> {
   const contract = await getContract()
   if (!contract) {
     throw new Error('Contract instance not available')
   }
   const tx = await contract.sendMessage()
   await tx.wait()
+  return tx.hash;
 }
 
-export async function createGroup(): Promise<void> {
+export async function createGroup(): Promise<string> {
   const contract = await getContract()
   if (!contract) {
     throw new Error('Contract instance not available')
   }
   const tx = await contract.createGroup()
   await tx.wait()
+  return tx.hash;
 }
 
-export async function sendEmojiReaction(): Promise<void> {
+export async function sendEmojiReaction(): Promise<string> {
   const contract = await getContract()
   if (!contract) {
     throw new Error('Contract instance not available')
   }
   const tx = await contract.sendEmojiReaction()
   await tx.wait()
+  return tx.hash;
 }
 
-export async function register(username: string): Promise<void> {
+export async function register(username: string): Promise<string> {
  try {
    const contract = await getContract()
    if (!contract) {
@@ -452,8 +486,25 @@ export async function register(username: string): Promise<void> {
    }
    const tx = await contract.register(username)
    await tx.wait()
+   return tx.hash;
  } catch (error) {
    console.error('Error registering username:', error)
+   throw error
+ }
+}
+
+export async function deleteGroup(groupId: string): Promise<void> {
+ const contract = await getContract()
+ if (!contract) {
+   throw new Error('Contract instance not available')
+ }
+
+ try {
+   // Assuming there's a deleteGroup function in your contract
+   const tx = await contract.deleteGroup(groupId)
+   await tx.wait()
+ } catch (error) {
+   console.error('Error deleting group:', error)
    throw error
  }
 }

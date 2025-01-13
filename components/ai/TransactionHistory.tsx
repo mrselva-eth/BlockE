@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { format } from 'date-fns'
 import { useWallet } from '@/contexts/WalletContext'
 import { ChevronLeft, ChevronRight, ExternalLink, AlertCircle } from 'lucide-react'
@@ -10,7 +10,7 @@ interface Transaction {
   address: string
   type: 'deposit' | 'withdraw'
   amount: number
-  txHash: string
+  transactionHash: string // Use transactionHash instead of txHash
   timestamp: string
 }
 
@@ -27,16 +27,16 @@ export default function TransactionHistory() {
 
     setIsLoading(true)
     setError(null)
-    
+
     try {
-      const response = await fetch(`/api/transactions?address=${address}&page=${currentPage}&limit=2`)
+      const response = await fetch(`/api/beait?address=${address}&page=${currentPage}&limit=2`) // Updated API endpoint
       if (!response.ok) {
         throw new Error('Failed to fetch transactions')
       }
-      
+
       const data = await response.json()
-      setTransactions(data.transactions || [])
-      setTotalPages(Math.max(1, Math.ceil((data.total || 0) / 2)))
+      setTransactions(data.actions || [])
+      setTotalPages(Math.max(1, Math.ceil((data.totalCount || 0) / 2)))
     } catch (error) {
       console.error('Failed to fetch transactions:', error)
       setError('Failed to load transactions. Please try again.')
@@ -48,9 +48,7 @@ export default function TransactionHistory() {
   }, [address, currentPage])
 
   useEffect(() => {
-    if (address) {
-      fetchTransactions()
-    }
+    fetchTransactions()
   }, [address, currentPage, fetchTransactions])
 
   if (isLoading) {
@@ -89,7 +87,7 @@ export default function TransactionHistory() {
       <div className="space-y-4">
         {transactions.map((tx) => (
           <div
-            key={tx._id}
+            key={`${tx.transactionHash}-${tx.timestamp}`}
             className="p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow bg-white"
           >
             <div className="flex items-center justify-between mb-2">
@@ -106,7 +104,7 @@ export default function TransactionHistory() {
                 </span>
               </div>
               <a
-                href={`https://polygonscan.com/tx/${tx.txHash}`}
+                href={`https://polygonscan.com/tx/${tx.transactionHash}`} // Use transactionHash
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:text-primary/80"

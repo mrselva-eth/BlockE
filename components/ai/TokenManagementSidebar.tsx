@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ChevronRight, ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import { useWallet } from '@/contexts/WalletContext'
@@ -11,6 +11,14 @@ import { BE_AI_CONTRACT_ADDRESS, BE_AI_CONTRACT_ABI } from '@/utils/beAiContract
 import TransactionHistory from './TransactionHistory'
 import TransactionRejectedMessage from '../TransactionRejectedMessage'
 import TransactionStatus from '../TransactionStatus'
+
+interface Transaction {
+  _id: string;
+  type: 'deposit' | 'withdraw';
+  amount: number;
+  timestamp: string;
+  transactionHash: string;
+}
 
 type Mode = 'deposit' | 'withdraw'
 type TransactionStatus = 'idle' | 'approving' | 'pending' | 'success' | 'error'
@@ -27,6 +35,8 @@ export default function TokenManagementSidebar() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
   const [showCornerNotification, setShowCornerNotification] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1); // Added state for pagination
+
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -54,13 +64,13 @@ export default function TokenManagementSidebar() {
   const handleTransaction = async () => {
     if (!window.ethereum || !address) return
     setError(null)
-    
+
     try {
       const provider = new ethers.BrowserProvider(window.ethereum)
       const signer = await provider.getSigner()
       const tokenContract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, signer)
       const aiContract = new ethers.Contract(BE_AI_CONTRACT_ADDRESS, BE_AI_CONTRACT_ABI, signer)
-      
+
       setIsProcessing(true)
       if (mode === 'deposit') {
         setStatus('approving')
@@ -69,18 +79,18 @@ export default function TokenManagementSidebar() {
           ethers.parseEther(amount)
         )
         await approveTx.wait()
-        
+
         setStatus('pending')
         const depositTx = await aiContract.deposit(ethers.parseEther(amount))
         await depositTx.wait()
 
-        await fetch('/api/transactions', {
+        await fetch('/api/beait', { // Updated API endpoint
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            address: address.toLowerCase(),
-            type: 'deposit',
-            amount: Number(amount),
+            address: address!.toLowerCase(),
+            type: mode,
+            amount: parseFloat(amount),
             txHash: depositTx.hash,
           }),
         })
@@ -105,13 +115,13 @@ export default function TokenManagementSidebar() {
         const withdrawTx = await aiContract.withdraw(ethers.parseEther(amount))
         await withdrawTx.wait()
 
-        await fetch('/api/transactions', {
+        await fetch('/api/beait', { // Updated API endpoint
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            address: address.toLowerCase(),
-            type: 'withdraw',
-            amount: Number(amount),
+            address: address!.toLowerCase(),
+            type: mode,
+            amount: parseFloat(amount),
             txHash: withdrawTx.hash,
           }),
         })
@@ -132,7 +142,7 @@ export default function TokenManagementSidebar() {
         const data = await response.json()
         setBalance(data.balance)
       }
-      
+
       setStatus('success')
       setAmount('0')
       setIsProcessing(false)
@@ -180,6 +190,21 @@ export default function TokenManagementSidebar() {
     }
   }
 
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/beait?address=${address}&page=${currentPage}&limit=2`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      // ... process data
+    } catch (err) {
+      console.error("Error fetching transactions:", err);
+      // ... handle error
+    }
+  }, [address, currentPage]);
+
+
   return (
     <>
       {!isOpen && (
@@ -208,7 +233,7 @@ export default function TokenManagementSidebar() {
       >
         <div className="p-6">
           <h2 className="text-xl font-bold mb-2 pb-2 border-b-2 border-indigo-500">BE Token Management</h2>
-          
+
           <div className="flex items-center gap-2 mb-6">
             <Image
               src="/blocke-logo.png"

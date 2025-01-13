@@ -100,5 +100,6 @@ export interface BlockEUser {
   // Metadata
   createdAt: Date;
   updatedAt: Date;
+  connectedAddressSearched?: boolean; // Add this line
 }
 

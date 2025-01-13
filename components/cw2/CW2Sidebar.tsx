@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { X, Home, LayoutDashboard, Coins, Binary, Bot, ArrowLeftRight, BarChart2, MessageCircle, Network, ImageIcon, FishIcon as Whale, FuelIcon as GasPump, Gift } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
@@ -35,6 +35,16 @@ export default function CW2Sidebar({ isOpen, onClose }: CW2SidebarProps) {
  const sidebarItems = allSidebarItems.filter(item => !item.ceoOnly || isCEO)
  const pathname = usePathname();
 
+ const handlePageVisit = useCallback((href: string) => {
+  if (address) {
+    fetch('/api/others', { // Update API endpoint
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address, action: 'pageVisit', page: href }),
+    }).catch(error => console.error('Error logging page visit:', error))
+  }
+}, [address])
+
  return (
    <div
      className={`fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out z-30 overflow-y-auto ${
@@ -54,6 +64,7 @@ export default function CW2Sidebar({ isOpen, onClose }: CW2SidebarProps) {
            <li key={item.name}>
              <Link
                href={item.href}
+               onClick={() => handlePageVisit(item.href)} // Add onClick handler
                className={`flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors relative ${
                  pathname === item.href
                    ? 'text-purple-600 dark:text-purple-400 font-semibold'

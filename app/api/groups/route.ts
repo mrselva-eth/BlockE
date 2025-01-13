@@ -63,7 +63,6 @@ export async function POST(request: Request) {
   }
 }
 
-// Add endpoint to update group logo
 export async function PATCH(request: Request) {
   const { groupId, groupLogo, userAddress } = await request.json()
 
@@ -75,7 +74,6 @@ export async function PATCH(request: Request) {
     const client = await clientPromise
     const db = client.db('blocke')
     
-    // Check if user is the creator
     const group = await db.collection('groups').findOne({
       _id: new ObjectId(groupId),
       creatorAddress: userAddress.toLowerCase()

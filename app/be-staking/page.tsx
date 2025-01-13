@@ -19,6 +19,8 @@ import APRInfoButton from '@/components/APRInfoButton'
 import UserOverallStakedTokens from '@/components/UserOverallStakedTokens'
 import UserOverallClaimedTokens from '@/components/UserOverallClaimedTokens'
 import AnimatedStatsNumber from '@/components/AnimatedStatsNumber'; // Import AnimatedStatsNumber
+import { StakeData } from '@/types/StakeData'; // Import the type
+import { AlertTriangle } from 'lucide-react' // Import AlertTriangle
 
 const stakingPeriods = [
   { days: 1/1440, apr: 1000 }, // 1 minute for testing (1000% APR)
@@ -28,6 +30,7 @@ const stakingPeriods = [
   { days: 60, apr: 300 },
   { days: 90, apr: 350 },
 ]
+
 
 function BEStaking() {
   const { address, isConnected } = useWallet()
@@ -48,6 +51,29 @@ function BEStaking() {
   const [overallClaimed, setOverallClaimed] = useState('0')
   const [userOverallStaked, setUserOverallStaked] = useState('0')
   const [userOverallClaimed, setUserOverallClaimed] = useState('0')
+  const [overallUnstaked, setOverallUnstaked] = useState('0') // New state variable
+  const [stakingData, setStakingData] = useState<{
+    everStaked: boolean;
+    everClaimed: boolean;
+    everUnstaked: boolean;
+    staked: StakeData[]; // Use the imported type here
+    stakeCount: number;
+    claimCount: number;
+    unstakeCount: number;
+  }>(
+    {
+      everStaked: false,
+      everClaimed: false,
+      everUnstaked: false,
+      staked: [],
+      stakeCount: 0,
+      claimCount: 0,
+      unstakeCount: 0,
+    }
+  )
+  const [stakeCount, setStakeCount] = useState(0);
+  const [claimCount, setClaimCount] = useState(0);
+  const [unstakeCount, setUnstakeCount] = useState(0);
 
   const fetchBalance = useCallback(async () => {
     try {
@@ -107,6 +133,33 @@ function BEStaking() {
     }
   }
 
+  const fetchStakingData = useCallback(async () => {
+    if (!address) return
+
+    try {
+      const response = await fetch(`/api/staking?address=${address}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch staking data')
+      }
+      const data = await response.json()
+      setStakingData(data)
+
+      // Update counts
+      setStakeCount(data.stakeCount || 0);
+      setClaimCount(data.claimCount || 0);
+      setUnstakeCount(data.unstakeCount || 0);
+    } catch (error) {
+      console.error('Error fetching staking data:', error)
+    }
+  }, [address])
+
+  useEffect(() => {
+    if (isConnected && address) {
+      fetchStakingData()
+    }
+  }, [isConnected, address, fetchStakingData])
+
+
   const handleStake = async () => {
     if (!stakeAmount || !isConnected || parseFloat(stakeAmount) <= 0) {
       setStakeError('Please enter a valid stake amount')
@@ -143,6 +196,49 @@ function BEStaking() {
       fetchTotalStaked()
       setStakeAmount('')
       fetchUserOverallStats()
+
+      const stakeData: StakeData = { // Explicitly type the stakeData variable
+        transactionHash: tx2.hash,
+        amount: stakeAmount,
+        periodIndex,
+        startTime: Math.floor(Date.now() / 1000),
+        endTime: Math.floor(Date.now() / 1000) + (selectedPeriod.days * 24 * 60 * 60),
+        apr: selectedPeriod.apr,
+        expectedBE: expectedEarnings,
+        claimed: false,
+        unstaked: false,
+      }
+
+      // Update local stakingData state immediately
+      setStakingData(prev => ({
+        ...prev,
+        everStaked: true,
+        staked: [...prev.staked, stakeData],
+        stakeCount: prev.stakeCount + 1, // Update stake count
+      }))
+
+      try {
+        const response = await fetch('/api/staking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address, stakeData }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to save staking data')
+        }
+      } catch (error: any) {
+        // Revert optimistic update
+        setStakingData(prev => ({
+          ...prev,
+          everStaked: false, // Revert everStaked if needed
+          staked: prev.staked.filter(s => s.transactionHash !== stakeData.transactionHash), // Remove the stakeData from the array
+          stakeCount: prev.stakeCount -1, // Revert stake count
+        }))
+        console.error('Error saving stake data:', error)
+        alert(`Failed to save staking data: ${error.message}`)
+      }
     } catch (error: any) {
       console.error('Staking error:', error)
       setIsProcessing(false)
@@ -169,6 +265,7 @@ function BEStaking() {
       
       let totalStaked = ethers.parseUnits('0', 18)
       let totalClaimed = ethers.parseUnits('0', 18)
+      let totalUnstaked = ethers.parseUnits('0', 18) // New variable
 
       for (const event of events) {
         totalStaked = totalStaked + ('args' in event ? event.args.amount : BigInt(0))
@@ -182,8 +279,16 @@ function BEStaking() {
         totalClaimed = totalClaimed + ('args' in event ? event.args.reward : BigInt(0))
       }
 
+      const unstakeFilter = contract.filters.Unstaked() // Filter for Unstaked events
+      const unstakeEvents = await contract.queryFilter(unstakeFilter)
+
+      for (const event of unstakeEvents) {
+        totalUnstaked = totalUnstaked + ('args' in event ? event.args.amount : BigInt(0)) // Accumulate unstaked amounts
+      }
+
       setOverallStaked(ethers.formatUnits(totalStaked, 18))
       setOverallClaimed(ethers.formatUnits(totalClaimed, 18))
+      setOverallUnstaked(ethers.formatUnits(totalUnstaked, 18)) // Set the new state variable
     } catch (error) {
       console.error('Error fetching overall stats:', error)
     }
@@ -281,6 +386,74 @@ function BEStaking() {
                   </div>
                   <p className="text-3xl font-bold text-purple-600">
                     <AnimatedStatsNumber value={overallClaimed} /> BE
+                  </p>
+                </div>
+
+                {/* Overall Unstaked BE */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-[#4F46E5]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Image
+                      src="/blocke-logo.png"
+                      alt="BE Token"
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                    />
+                    <span className="text-lg font-medium">Overall Unstaked BE:</span>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-600">
+                    <AnimatedStatsNumber value={overallUnstaked} /> BE
+                  </p>
+                </div>
+
+                {/* Stake Count */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-[#4F46E5]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Image
+                      src="/blocke-logo.png"
+                      alt="BE Token"
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                    />
+                    <span className="text-lg font-medium">Stake Count:</span>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-600">
+                    {stakeCount}
+                  </p>
+                </div>
+
+                {/* Claim Count */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-[#4F46E5]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Image
+                      src="/blocke-logo.png"
+                      alt="BE Token"
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                    />
+                    <span className="text-lg font-medium">Claim Count:</span>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-600">
+                    {claimCount}
+                  </p>
+                </div>
+
+                {/* Unstake Count */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-[#4F46E5]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Image
+                      src="/blocke-logo.png"
+                      alt="BE Token"
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                    />
+                    <span className="text-lg font-medium">Unstake Count:</span>
+                  </div>
+                  <p className="text-3xl font-bold text-purple-600">
+                    {unstakeCount}
                   </p>
                 </div>
 
@@ -435,7 +608,7 @@ function BEStaking() {
 
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6"> {/* Update 2 */}
                   <h2 className="text-2xl font-semibold mb-6 text-purple-600 dark:text-purple-400">Staking History</h2>
-                  <StakingHistory onStakeUpdate={handleStakeUpdate} transactionPending={transactionPending} />
+                  <StakingHistory onStakeUpdate={handleStakeUpdate} stakingData={stakingData} transactionPending={transactionPending} />
                 </div>
 
                 {showRejected && (

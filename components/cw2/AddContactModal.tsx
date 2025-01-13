@@ -1,26 +1,69 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { X } from 'lucide-react'
+import { useWallet } from '@/contexts/WalletContext'
 
 interface AddContactModalProps {
   onClose: () => void
   onAdd: (name: string, address: string) => void
   isFullScreen?: boolean
+  contacts?: { contactAddress: string }[]
 }
 
-export default function AddContactModal({ onClose, onAdd, isFullScreen = false }: AddContactModalProps) {
+export default function AddContactModal({ onClose, onAdd, isFullScreen = false, contacts = [] }: AddContactModalProps) {
+  const { address: walletAddress } = useWallet()
   const [name, setName] = useState('')
   const [address, setAddress] = useState('')
+  const [addressError, setAddressError] = useState<string | undefined>(undefined)
+  const [allContacts, setAllContacts] = useState<string[]>([]); // State to store all contact addresses
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const fetchContacts = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/contacts?userAddress=${walletAddress}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch contacts');
+      }
+      const data = await response.json();
+      setAllContacts(data.map((contact: { contactAddress: string }) => contact.contactAddress.toLowerCase()));
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+    }
+  }, [walletAddress]);
+
+  useEffect(() => {
+    if (walletAddress) {
+      fetchContacts();
+    }
+  }, [walletAddress, fetchContacts]);
+
+  const isValidAddress = (address: string) => {
+    return /^0x[a-fA-F0-9]{40}$/.test(address)
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    await onAdd(name, address)
-    // Reset form
-    setName('')
-    setAddress('')
-    // Close modal
-    onClose()
-    // Force a refresh of the contacts list by triggering a state update in the parent
-    window.dispatchEvent(new CustomEvent('refreshContacts'))
+
+    if (!isValidAddress(address)) {
+      setAddressError('Invalid wallet address format.')
+      return
+    }
+
+    if (allContacts.includes(address.toLowerCase())) {
+      setAddressError('This address is already in your contact list.')
+      return
+    }
+
+    try {
+      await onAdd(name, address)
+      setName('')
+      setAddress('')
+      setAddressError(undefined) // Reset error message
+      onClose()
+      // Refresh contacts list after adding a new contact
+      fetchContacts();
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      alert('Failed to add contact. Please try again.');
+    }
   }
 
   if (isFullScreen) {
@@ -53,6 +96,7 @@ export default function AddContactModal({ onClose, onAdd, isFullScreen = false }
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 required
               />
+              {addressError && <p className="text-red-500 text-sm">{addressError}</p>}
             </div>
             <button
               type="submit"
@@ -89,6 +133,7 @@ export default function AddContactModal({ onClose, onAdd, isFullScreen = false }
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             required
           />
+          {addressError && <p className="text-red-500 text-sm">{addressError}</p>}
         </div>
         <button
           type="submit"

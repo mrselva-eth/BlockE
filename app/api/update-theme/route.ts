@@ -12,9 +12,9 @@ export async function POST(request: Request) {
     const client = await clientPromise
     const db = client.db('blocke')
 
-    await db.collection('users').updateOne(
+    await db.collection('others').updateOne( // Update collection name
       { address: address.toLowerCase() },
-      { $set: { theme } },
+      { $set: { address: address.toLowerCase(), theme } }, // Include address in the update
       { upsert: true }
     )
 
