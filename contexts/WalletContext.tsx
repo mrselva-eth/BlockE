@@ -48,6 +48,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [showDisconnectAnimation, setShowDisconnectAnimation] = useState(false)
   const [lastActivity, setLastActivity] = useState(Date.now())
   const [showDisconnectAlert, setShowDisconnectAlert] = useState<boolean>(false)
+  const [initialLoad, setInitialLoad] = useState(true); // Add initialLoad state
   const [showNetworkAlert, setShowNetworkAlert] = useState(false)
   const [isAutoDisconnectEnabled, setIsAutoDisconnectEnabled] = useState(true);
 
@@ -358,11 +359,17 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [])
 
   useEffect(() => {
-    const initializeWallet = async () => {
+    const initialize = async () => {
       if (typeof window !== 'undefined' && window.ethereum) {
         const isReady = await isWalletReady(window.ethereum)
         if (isReady) {
           const savedConnection = localStorage.getItem('walletConnection')
+
+          // Check if already connected and on a page other than home
+          if (savedConnection && window.location.pathname !== '/') {
+            setInitialLoad(false); // Prevent redirect on initial load if already connected
+          }
+
           if (savedConnection) {
             const { providerType } = JSON.parse(savedConnection)
             connectWallet(providerType, true)
@@ -370,12 +377,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setupNetworkChangeListener()
         } else {
           console.log("Wallet is not ready yet. Retrying in 1 second...")
-          setTimeout(initializeWallet, 1000)
+          setTimeout(initialize, 1000)
         }
       }
     }
 
-    initializeWallet()
+    initialize()
 
     return () => {
       if (typeof window !== 'undefined' && window.ethereum) {
@@ -383,6 +390,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
     }
   }, [connectWallet, isWalletReady, setupNetworkChangeListener])
+
 
   useEffect(() => {
     const fetchTheme = async () => {
