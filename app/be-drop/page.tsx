@@ -713,8 +713,8 @@ const BEDrop: React.FC = () => {
                 <Gift className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">BE Airdrop Balance</p>
-                <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                <p className="text-lg font-semibold text-gray-700 dark:text-black">BE Airdrop Balance</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent dark:text-black">
                   {airdropBalance} BE
                 </p>
               </div>

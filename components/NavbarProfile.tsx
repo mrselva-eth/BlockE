@@ -130,10 +130,10 @@ export default function NavbarProfile() {
             style={{ background: theme === 'dark' ? '#1f2937' : 'white' }}
           >
             {isLoading ? (
-              <p className="text-center py-2 text-sm">Loading...</p>
+              <p className="text-center py-2 text-sm text-black dark:text-black">Loading...</p>
             ) : error ? (
               <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                <AlertCircle className="text-red-600" />
+                <AlertCircle className="text-red-600 dark:text-red-600" />
                 <p className="text-sm text-red-600">Error loading profile</p>
               </div>
             ) : profileData ? (
@@ -158,8 +158,8 @@ export default function NavbarProfile() {
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800 dark:text-gray-100">{profileData.name || truncate(address, 12)}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{truncate(address, 12)}</p>
+                    <p className="font-medium text-gray-800 dark:text-black">{profileData.name || truncate(address, 12)}</p>
+                    <p className="text-xs text-gray-500 dark:text-black">{truncate(address, 12)}</p>
                   </div>
                 </div>
                 {profileData.bio && (

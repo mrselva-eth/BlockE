@@ -449,13 +449,19 @@ export async function withdraw(amount: string): Promise<string> { // Return tx h
 }
 
 export async function sendMessage(): Promise<string> {
-  const contract = await getContract()
-  if (!contract) {
-    throw new Error('Contract instance not available')
-  }
-  const tx = await contract.sendMessage()
-  await tx.wait()
-  return tx.hash;
+const contract = await getContract()
+if (!contract) {
+ throw new Error('Contract instance not available')
+}
+
+try {
+ const tx = await contract.sendMessage() // Call the sendMessage function on the contract
+ await tx.wait()
+ return tx.hash
+} catch (error: any) {
+ console.error('Error sending message:', error)
+ throw new Error('Failed to send message on-chain. Please try again.')
+}
 }
 
 export async function createGroup(): Promise<string> {
@@ -469,13 +475,19 @@ export async function createGroup(): Promise<string> {
 }
 
 export async function sendEmojiReaction(): Promise<string> {
-  const contract = await getContract()
-  if (!contract) {
-    throw new Error('Contract instance not available')
-  }
-  const tx = await contract.sendEmojiReaction()
-  await tx.wait()
-  return tx.hash;
+const contract = await getContract();
+if (!contract) {
+ throw new Error('Contract instance not available');
+}
+
+try {
+ const tx = await contract.sendEmojiReaction(); // Call the sendEmojiReaction function
+ await tx.wait();
+ return tx.hash;
+} catch (error: any) {
+ console.error('Error sending emoji reaction:', error);
+ throw new Error('Failed to send emoji reaction on-chain. Please try again.');
+}
 }
 
 export async function register(username: string): Promise<string> {
