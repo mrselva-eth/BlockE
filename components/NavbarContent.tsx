@@ -187,13 +187,13 @@ useEffect(() => {
   }
 }, [])
 
-const getNextRpcEndpoint = () => {
+const getNextRpcEndpoint = useCallback(() => { // Wrap in useCallback
   const nextIndex = (currentRpcIndex + 1) % RPC_ENDPOINTS.length
   setCurrentRpcIndex(nextIndex)
   return RPC_ENDPOINTS[nextIndex]
-}
+}, [currentRpcIndex, setCurrentRpcIndex]); // Add dependencies
 
-const fetchWithFallback = async (fetchFn: () => Promise<any>, attempts = 0): Promise<any> => {
+const fetchWithFallback = useCallback(async (fetchFn: () => Promise<any>, attempts = 0): Promise<any> => {
     try {
       return await fetchFn();
     } catch (error: any) {
@@ -207,9 +207,9 @@ const fetchWithFallback = async (fetchFn: () => Promise<any>, attempts = 0): Pro
       setRpcError('All RPC endpoints failed.'); // Set error message if all endpoints fail
       throw error; // Re-throw the error after all attempts
     }
-  };
+ }, [currentRpcIndex, getNextRpcEndpoint]); // Fix: add useCallback and dependencies
 
-const fetchTokenBalance = async () => {
+const fetchTokenBalance = useCallback(async () => { // Fix: add useCallback
   if (!isConnected || !address) {
     setTokenBalance('0')
     return
@@ -219,7 +219,7 @@ const fetchTokenBalance = async () => {
     const provider = new ethers.JsonRpcProvider(RPC_ENDPOINTS[currentRpcIndex])
     const contract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, provider)
   
-    const balance = await fetchWithFallback(async () => {
+    const balance = await fetchWithFallback(async () => { // Fix: add fetchWithFallback
       if (ethers.isAddress(address)) {
         const result = await contract.balanceOf(address)
         // Check for valid result before formatting
@@ -238,7 +238,7 @@ const fetchTokenBalance = async () => {
     console.error('Error fetching token balance:', error)
     setTokenBalance('0')
   }
-}
+}, [isConnected, address, currentRpcIndex, fetchWithFallback]) // Fix: add dependencies
 
 const fetchPolygonBalance = useCallback(async () => {
     // Check if address is valid and exists before fetching balance
@@ -262,7 +262,7 @@ const fetchPolygonBalance = useCallback(async () => {
       console.error('Error fetching Polygon balance:', error);
       setPolygonBalance('0.00');
     }
-  }, [address, currentRpcIndex]);
+  }, [address, currentRpcIndex, fetchWithFallback]); // Fix: add fetchWithFallback
 
 useEffect(() => {
   if (address) {
@@ -296,7 +296,7 @@ useEffect(() => {
       fetchPolygonBalance();
     }, 15000); // Fetch every 15 seconds
     return () => clearInterval(intervalId);
-  }, [fetchPolygonBalance, isConnected, address]);
+  }, [fetchPolygonBalance, isConnected, address, fetchTokenBalance]); // Fix: add fetchTokenBalance
 
 
 const handleMouseMove = (event: MouseEvent) => {

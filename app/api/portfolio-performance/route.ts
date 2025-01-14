@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const fetchWithRetry = async (url: string, retries = 3, backoff = 300) => {
+const fetchWithRetry = async (url: string, retries = 3, backoff = 300): Promise<any> => { // Added return type annotation
   try {
     const response = await fetch(url);
     if (response.status === 429 && retries > 0) {

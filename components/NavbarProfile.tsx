@@ -102,7 +102,7 @@ export default function NavbarProfile() {
         style={{ background: theme === 'dark' ? 'transparent' : '' }}
       >
         {profileImage ? (
-          <img
+          <Image
             src={profileImage}
             alt="Profile"
             width={28}

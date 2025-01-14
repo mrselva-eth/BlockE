@@ -15,6 +15,10 @@ import Sidebar from '@/components/Sidebar';
 import SocialMediaLinks from '@/components/SocialMediaLinks';
 import TransactionStatus from '@/components/TransactionStatus';
 
+interface BEDropProps {
+ hasUID: boolean;
+}
+
 interface Task {
   title: string;
   description: string;
@@ -25,7 +29,7 @@ interface Task {
   countThresholds?: number[];
 }
 
-const BEDrop: React.FC = () => {
+const BEDrop: React.FC<BEDropProps> = ({ hasUID }) => {
   const { address, isConnected, isAutoDisconnectEnabled, theme } = useWallet();
   const { ownedUIDs, refetchUIDs } = useBlockEUID();
   const [tasks, setTasks] = useState<Task[]>([]);

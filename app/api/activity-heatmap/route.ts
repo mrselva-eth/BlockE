@@ -4,7 +4,7 @@ const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const fetchWithRetry = async (url: string, retries = 3, backoff = 300) => {
+const fetchWithRetry = async (url: string, retries = 3, backoff = 300): Promise<any> => {
   try {
     const response = await fetch(url);
     if (response.status === 429 && retries > 0) {
