@@ -40,7 +40,7 @@ export default function FeatureSection({
 
   return (
     <div className={`relative overflow-hidden rounded-3xl ${bgColor} ${className} min-h-[600px] transform hover:scale-[1.02] transition-transform duration-300`}>
-      {/* Decorative circles - now with lower z-index */}
+      {/* Decorative circles */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <motion.div
           className={`absolute w-64 h-64 rounded-full ${circleColors[0]} opacity-10 -top-20 -right-20`}
@@ -80,11 +80,11 @@ export default function FeatureSection({
         />
       </div>
 
-      {/* Content - now with higher z-index */}
+      {/* Content */}
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 p-16">
         <div className="flex flex-col justify-center">
           <motion.h2 
-            className="text-6xl font-bold mb-8 leading-tight"
+            className="text-6xl font-bold mb-8 leading-tight text-gray-900 dark:text-white"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
