@@ -30,7 +30,7 @@ hasUID: boolean;
 export default function ProfileContent({ hasUID }: ProfileContentProps) {
 const { address } = useWallet()
 const [isEditing, setIsEditing] = useState(false)
-const [profile, setProfile] = useState<Profile | null>(null)
+const [profile, setProfile] = useState<Profile>({ address: '' }) // Initialize with empty profile
 const [previewImage, setPreviewImage] = useState<string | null>(null)
 const [isLoading, setIsLoading] = useState(true); // Added isLoading state
 const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
@@ -39,7 +39,7 @@ const { ownedUIDs, refetchUIDs } = useBlockEUID(); // Access ownedUIDs and refet
 const fetchProfile = useCallback(async () => {
   setIsLoading(true); // Set loading to true before fetching
   if (!address) {
-    setIsLoading(false) // Set loading to false if address is missing
+    setIsLoading(false)
     return
   }
 
@@ -49,19 +49,16 @@ const fetchProfile = useCallback(async () => {
       const data = await response.json()
       if (data.profile) {
         setProfile(data.profile)
-      } else { // Set loading to false if profile data is missing
-        setIsLoading(false); // Update 3: added set loading here
       }
     }
-  } catch(error) {
+  } catch (error) {
     console.error('Error fetching profile:', error)
-    setIsLoading(false); // Set loading to false if an error occurs
   } finally {
     if (address) {
       refetchUIDs();
     }
     setIsLoading(false)
-  } // Finally block added
+  }
 }, [address, refetchUIDs])
 
 useEffect(() => {
@@ -93,32 +90,6 @@ if (!hasUID) {
     </div>
   )
 }
-
-if (!profile && !isLoading) {
-  return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-16rem)]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin hidden"></div> {/* No spinner for now */}
-        <p className="text-gray-600 mb-4">You haven&apos;t created a profile yet. Please fill out your profile information.</p> {/* Update 1 */}
-        <button onClick={fetchProfile} className="px-4 py-2 rounded-md bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-          Refresh Profile
-        </button> {/* Update 2 */}
-      </div>
-    </div>
-  )
-}
-
-if (!profile && isLoading) { // Display spinner and message when loading
-  return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-16rem)]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div> {/* Show spinner */}
-        <p className="text-gray-600">Loading profile...</p>
-      </div>
-    </div>
-  );
-}
-
 
 const defaultImage = isCEO ? '/ceo.png' : '/user.png'
 
@@ -162,38 +133,30 @@ const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
   }
 }
 
-if (!profile) {
-  return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-16rem)]">
-      <p>Loading profile...</p>
-    </div>
-  )
-}
 
 return (
-  <div className="flex items-center justify-center min-h-[calc(100vh-16rem)]">
+  <div className="flex items-center justify-center min-h-[calc(100vh-16rem)] w-full"> {/* Added w-full */}
     <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-lg w-full max-w-2xl">
-      {profile.beuid && (
-        <h1 className="text-3xl font-bold text-center mb-6">{profile.beuid}</h1>
-      )}
-
-      {!isEditing ? (
+      {isLoading ? ( // Show loading state while fetching profile
+        <div className="flex items-center justify-center h-full">
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : !isEditing ? ( // Show profile preview card when not editing
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-6">
-            <div className="relative">
+            <div className="relative w-20 h-20 rounded-full overflow-hidden">
               <Image
-                src={profile.profileImage || defaultImage}
+                src={profile?.profileImage || defaultImage}
                 alt="Profile"
-                width={120}
-                height={120}
-                className="rounded-full"
+                fill
+                className="object-cover"
               />
             </div>
             <div>
-              <h2 className="text-2xl font-bold mb-1">{profile.name || 'Unnamed User'}</h2>
-              <p className="text-gray-600 mb-4">{profile.bio}</p>
+              <h2 className="text-2xl font-bold mb-1">{profile?.name || 'Unnamed User'}</h2>
+              <p className="text-gray-600 mb-4">{profile?.bio || 'No bio yet.'}</p> {/* Display "No bio yet" if bio is empty */}
               <div className="flex gap-4">
-                {profile.instagramLink && (
+                {profile?.instagramLink && (
                   <a
                     href={profile.instagramLink}
                     target="_blank"
@@ -203,7 +166,7 @@ return (
                     <Instagram size={24} />
                   </a>
                 )}
-                {profile.youtubeLink && (
+                {profile?.youtubeLink && (
                   <a
                     href={profile.youtubeLink}
                     target="_blank"
@@ -213,22 +176,22 @@ return (
                     <Youtube size={24} />
                   </a>
                 )}
-                {profile.linkedinLink && (
+                {profile?.linkedinLink && (
                   <a
                     href={profile.linkedinLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-500 hover:text-blue-600"
+                    className="text-blue-700 hover:text-blue-800"
                   >
                     <Linkedin size={24} />
                   </a>
                 )}
-                {profile.githubLink && (
-                  <a href={profile.githubLink} target="_blank" rel="noopener noreferrer" className="text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100">
+                {profile?.githubLink && (
+                  <a href={profile.githubLink} target="_blank" rel="noopener noreferrer" className="text-gray-800 hover:text-gray-900 dark:text-gray-200 dark:hover:text-gray-100">
                     <Github size={24} />
                   </a>
                 )}
-                {profile.twitterLink && (
+                {profile?.twitterLink && (
                   <a href={profile.twitterLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-500">
                     <Twitter size={24} />
                   </a>
@@ -243,7 +206,7 @@ return (
             <Edit2 size={20} />
           </button>
         </div>
-      ) : (
+      ) : ( // Show editing form when isEditing is true
         <form onSubmit={handleSave} className="grid grid-cols-2 gap-8 w-full">
           <div className="space-y-6">
             <div className="flex-shrink-0 mb-6">
@@ -387,6 +350,17 @@ return (
             </button>
           </div>
         </form>
+      )}
+
+      {profile && !isEditing && ( // Show edit button when not editing and profile exists
+        <div className="absolute top-8 right-8">
+          <button
+            onClick={() => setIsEditing(true)}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <Edit2 size={20} />
+          </button>
+        </div>
       )}
     </div>
   </div>
