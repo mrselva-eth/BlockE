@@ -170,17 +170,11 @@ useEffect(() => {
  fetchStats();
 }, []);
 
-useEffect(() => {
-  // Reset the loggedOut state when the component mounts, or when the connection state changes
-  if (!loggedOut || isConnected) {
-    setLoggedOut(false);
-  }
-}, [loggedOut, isConnected, setLoggedOut]);
 
 return (
  <div 
    ref={containerRef} 
-   className={`min-h-screen bg-white dark:bg-gray-900 relative ${!isConnected ? 'overflow-hidden h-screen' : 'overflow-x-hidden'}`}
+   className={`min-h-screen bg-white dark:bg-gray-900 relative overflow-x-hidden ${!isConnected ? 'overflow-hidden h-screen' : ''}`}
  >
    {isConnected && <Sidebar />}
    <main className="relative z-10">

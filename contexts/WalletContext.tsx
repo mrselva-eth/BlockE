@@ -165,16 +165,14 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setShowSuccessAnimation(false)
       setShowDisconnectAlert(false)
       setShowNetworkAlert(false)
+      setLoggedOut(true); // Set loggedOut to true when disconnecting
+      localStorage.removeItem('walletConnection')
       if (disconnectTimerRef.current) {
         clearTimeout(disconnectTimerRef.current)
       }
-      localStorage.removeItem('walletConnection')
-
       if (typeof window !== 'undefined' && window.ethereum) {
         window.ethereum.removeAllListeners()
       }
-
-      setLoggedOut(true); // Set loggedOut to true when disconnecting
       setShowDisconnectAnimation(false)
     }, 0)
   }, [])
@@ -454,7 +452,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         clearTimeout(disconnectTimerRef.current)
       }
     }
-  }, [isConnected, isAutoDisconnectEnabled, resetAutoDisconnectTimer])
+  }, [isConnected, resetAutoDisconnectTimer])
 
 
   const contextValue: WalletContextType = {

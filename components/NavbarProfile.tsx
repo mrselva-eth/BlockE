@@ -34,7 +34,7 @@ export default function NavbarProfile() {
 
     disconnectWallet();
     setShowDropdown(false);
-    setLoggedOut(true);
+    //setLoggedOut(true); //Removed as per update
   };
 
   const truncate = (str: string | undefined, len: number) => {
@@ -119,50 +119,39 @@ export default function NavbarProfile() {
             style={{ background: theme === 'dark' ? '#1f2937' : 'white' }}
           >
             {isLoading ? (
-              <p className="text-center py-2 text-sm text-black dark:text-black">Loading...</p>
+              <p className="text-center py-2 text-sm text-gray-600 dark:text-gray-400">Loading...</p>
             ) : error ? (
               <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                 <AlertCircle className="text-red-600 dark:text-red-600" />
                 <p className="text-sm text-red-600">Error loading profile</p>
               </div>
-            ) : profileData ? (
+            ) : (
               <>
                 <div className="flex items-center px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                   <div className="w-10 h-10 rounded-full overflow-hidden mr-3 relative">
-                    {profileData.profileImage ? (
-                      <Image
-                        src={profileData.profileImage || "/placeholder.svg"}
-                        alt="Profile"
-                        fill
-                        className="object-cover rounded-full"
-                      />
-                    ) : (
-                      <Image
-                        src={isCEO ? '/ceo.png' : '/user.png'}
-                        alt="Profile"
-                        width={40}
-                        height={40}
-                        className="rounded-full"
-                      />
-                    )}
+                    <Image
+                      src={profileImage || defaultImage}
+                      alt="Profile"
+                      fill
+                      className="object-cover rounded-full"
+                    />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800 dark:text-black">{profileData.name || truncate(address, 12)}</p>
+                    <p className="font-medium text-gray-800 dark:text-black">{profileData?.name || truncate(address, 12)}</p>
                     <p className="text-xs text-gray-500 dark:text-black">{truncate(address, 12)}</p>
                   </div>
                 </div>
-                {profileData.bio && (
+                {profileData?.bio && (
                   <p className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                     {profileData.bio}
                   </p>
                 )}
-                {profileData.email && (
+                {profileData?.email && (
                   <a href={`mailto:${profileData.email}`} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 block">
                     {truncate(profileData.email, 24)}
                   </a>
                 )}
-                {/* Social Media Links */}
-                {profileData.socialLinks && (
+                {profileData?.socialLinks && (
                   <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex gap-4 mt-2">
                     {Object.entries(profileData.socialLinks).map(([platform, link]) => {
                       if (!link) return null;
@@ -189,8 +178,6 @@ export default function NavbarProfile() {
                   Log out
                 </button>
               </>
-            ) : (
-              <p className="text-center py-2 text-sm text-gray-600 dark:text-gray-400">No profile found</p>
             )}
           </motion.div>
         )}
