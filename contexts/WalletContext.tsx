@@ -267,11 +267,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       // Request accounts and handle potential pending requests
-      await provider.request({ method: 'eth_requestAccounts' }).catch((error: any) => {
+      const accounts = await provider.request({ method: 'eth_requestAccounts' }).catch((error: any) => {
         if (error.code === -32002) {
           // Pending request, let MetaMask handle it
           console.warn("MetaMask request already pending. Awaiting user response.")
-          throw error // Re-throw to prevent further execution
         } else if (error.code === 4001) {
           // User rejected
           throw new Error("User rejected the request.")
@@ -282,6 +281,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       const ethersProvider = new ethers.BrowserProvider(provider)
       const newSigner = await ethersProvider.getSigner()
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No accounts found in the wallet.")
+      }
+
       const newAddress = await newSigner.getAddress()
 
       setSigner(newSigner)
