@@ -43,11 +43,7 @@ export default function BlockEUIDPage() {
     checkUID()
   }, [isConnected, address])
 
-  useEffect(() => {
-    if (!hasUID && activePage === 'Profile') {
-      setActivePage('BlockE UID')
-    }
-  }, [hasUID, activePage])
+  // Removed the useEffect that sets activePage to 'BlockE UID'
 
   useEffect(() => {
     // Set theme to 'dark' on component mount

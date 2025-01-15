@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
 import { Instagram, Youtube, Linkedin, Edit2, Camera, Trash2, AlertCircle, Github, Twitter } from 'lucide-react'
 import Image from 'next/image'
+import { useBlockEUID } from '@/hooks/useBlockEUID'; // Import useBlockEUID
 
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
 
@@ -32,6 +33,7 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
+  const { ownedUIDs, refetchUIDs } = useBlockEUID(); // Access ownedUIDs and refetchUIDs
 
   const fetchProfile = useCallback(async () => {
     if (!address) return
@@ -52,6 +54,13 @@ export default function ProfileContent({ hasUID }: ProfileContentProps) {
   useEffect(() => {
     fetchProfile()
   }, [fetchProfile])
+
+  // Call refetchUIDs after successful profile fetch to update ownedUIDs
+  useEffect(() => {
+    if (profile) {
+      refetchUIDs();
+    }
+  }, [profile, refetchUIDs]);
 
   // Add hasUID check at the beginning
   if (!hasUID) {
