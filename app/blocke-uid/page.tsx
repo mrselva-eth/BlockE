@@ -32,7 +32,14 @@ export default function BlockEUIDPage() {
         try {
           const response = await fetch(`/api/verify-beuid?address=${address}`)
           const data = await response.json()
+
+          // Update hasUID state *before* fetching the profile
           setHasUID(data.hasUID)
+
+          // If hasUID is true, fetch the profile
+          if (data.hasUID) {
+            setActivePage('Profile'); // Set active page to 'Profile' if UID exists
+          }
         } catch (error) {
           console.error('Error checking BlockE UID:', error)
           setError('Failed to check BlockE UID status')
