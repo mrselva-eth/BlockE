@@ -11,17 +11,18 @@ import { motion, AnimatePresence } from 'framer-motion'
 const CEO_ADDRESS = '0x603fbF99674B8ed3305Eb6EA5f3491F634A402A6'
 
 export default function NavbarProfile() {
-  const { address, disconnectWallet } = useWallet()
+  const { address, disconnectWallet, loggedOut, setLoggedOut } = useWallet()
   const [showDropdown, setShowDropdown] = useState(false)
   const { theme } = useTheme()
-  const { profileData, isLoading, error, refetch: refetchProfile } = useProfile(address)
+  const { profileData, isLoading, error, refetch: refetchProfile } = useProfile(address || "") // Provide default value for address
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const isCEO = address?.toLowerCase() === CEO_ADDRESS.toLowerCase()
+  const defaultImage = isCEO ? '/ceo.png' : '/user.png' // Set default image based on CEO status
 
   const handleLogout = async () => {
     if (address) {
       try {
-        await fetch('/api/others', { // Update API endpoint
+        await fetch('/api/others', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ address, action: 'logout' }),
@@ -33,6 +34,7 @@ export default function NavbarProfile() {
 
     disconnectWallet();
     setShowDropdown(false);
+    setLoggedOut(true);
   };
 
   const truncate = (str: string | undefined, len: number) => {
@@ -41,31 +43,24 @@ export default function NavbarProfile() {
   }
 
   useEffect(() => {
-    // Refetch profile data whenever the dropdown is opened
     if (showDropdown && address) {
       refetchProfile()
     }
   }, [showDropdown, address, refetchProfile])
 
   const fetchProfileImage = useCallback(async () => {
+    if (!address) return; // Return early if address is not available
+
     try {
       const response = await fetch(`/api/profile?address=${address}`)
       if (response.ok) {
         const data = await response.json()
-
-        if (data.profile?.profileImage) {
-          setProfileImage(data.profile.profileImage);
-        } else if (isCEO) {
-          setProfileImage('/ceo.png');
-        }
+        setProfileImage(data.profile?.profileImage || null) // Set to null if no profile image
       }
     } catch (error) {
       console.error('Error fetching profile image:', error)
-      if (isCEO) {
-        setProfileImage('/ceo.png');
-      }
     }
-  }, [address, isCEO])
+  }, [address])
 
   useEffect(() => {
     if (address) {
@@ -75,15 +70,18 @@ export default function NavbarProfile() {
 
   useEffect(() => {
     if (profileData?.profileImage) {
-      setProfileImage(profileData.profileImage);
-    } else if (isCEO) {
-      setProfileImage('/ceo.png');
-    } else {
-      setProfileImage(null);
+      setProfileImage(profileData.profileImage)
     }
-  }, [profileData, isCEO]);
+  }, [profileData?.profileImage])
 
-  if (!address) return null
+  useEffect(() => {
+    // Reset loggedOut state when address changes (user connects a different wallet)
+    if (address) {
+      setLoggedOut(false);
+    }
+  }, [address, setLoggedOut]);
+
+  if (!address) return null // Return null if address is not available
 
   const socialLinkIcons = {
     instagram: Instagram,
@@ -99,26 +97,17 @@ export default function NavbarProfile() {
       <button
         onClick={() => setShowDropdown(!showDropdown)}
         className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors overflow-hidden relative"
-        style={{ background: theme === 'dark' ? 'transparent' : '' }}
       >
-        {profileImage ? (
-          <Image
-            src={profileImage}
-            alt="Profile"
-            width={28}
-            height={28}
-            className="rounded-full border-2 border-purple-500"
-          />
-        ) : (
-          <Image
-            src={isCEO ? '/ceo.png' : '/user.png'}
-            alt="Profile"
-            width={28}
-            height={28}
-            className="rounded-full"
-          />
-        )}
+        {/* Always show an image, defaulting to user.png or ceo.png */}
+        <Image
+          src={profileImage || defaultImage}
+          alt="Profile"
+          width={28}
+          height={28}
+          className="rounded-full border-2 border-purple-500"
+        />
       </button>
+
       <AnimatePresence>
         {showDropdown && (
           <motion.div
@@ -142,7 +131,7 @@ export default function NavbarProfile() {
                   <div className="w-10 h-10 rounded-full overflow-hidden mr-3 relative">
                     {profileData.profileImage ? (
                       <Image
-                        src={profileData.profileImage}
+                        src={profileData.profileImage || "/placeholder.svg"}
                         alt="Profile"
                         fill
                         className="object-cover rounded-full"

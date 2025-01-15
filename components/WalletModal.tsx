@@ -35,7 +35,7 @@ const wallets = [
 ]
 
 export default function WalletModal() {
-  const { showWalletModal, setShowWalletModal, connectWallet, verifyCaptcha } = useWallet()
+  const { showWalletModal, setShowWalletModal, connectWallet, verifyCaptcha, isWalletLocked, setIsWalletLocked } = useWallet()
   const recaptchaRef = useRef<ReCAPTCHA>(null)
   const [error, setError] = useState<string | null>(null)
   const [captchaVerified, setCaptchaVerified] = useState(false)
@@ -76,6 +76,7 @@ export default function WalletModal() {
 
   const handleWalletClick = async (walletId: string) => {
     setError(null)
+    setIsWalletLocked(false);
     try {
       await connectWallet(walletId)
     } catch (error: any) {
@@ -118,6 +119,23 @@ export default function WalletModal() {
           </div>
         )}
 
+        {isWalletLocked && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-100 rounded-lg flex items-center gap-2">
+            <div className="w-16 h-16 relative">
+              <Image
+                src="/unlock.gif"
+                alt="Unlock Wallet"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div className="flex flex-col">
+              <p className="text-yellow-700 font-medium">Wallet Locked</p>
+              <p className="text-yellow-600 mt-1 text-sm">Please unlock your wallet to connect.</p>
+            </div>
+          </div>
+        )}
+
         {!captchaVerified ? (
           <div className="text-center">
             <p className="mb-4">Please verify that you are not a robot before connecting your wallet.</p>
@@ -141,7 +159,7 @@ export default function WalletModal() {
                 className="w-full flex items-center p-4 rounded-lg border border-gray-200 hover:border-blue-500 transition-colors"
               >
                 <Image
-                  src={wallet.icon}
+                  src={wallet.icon || "/placeholder.svg"}
                   alt={wallet.name}
                   width={32}
                   height={32}

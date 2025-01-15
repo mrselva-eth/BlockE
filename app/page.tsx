@@ -49,7 +49,7 @@ return <span>{displayValue.toLocaleString()}</span>;
 };
 
 export default function Home() {
-const { isConnected, setShowWalletModal, theme } = useWallet()
+const { isConnected, setShowWalletModal, theme, loggedOut, setLoggedOut } = useWallet()
 const [scrollY, setScrollY] = useState(0)
 const containerRef = useRef<HTMLDivElement>(null)
 const { scrollYProgress } = useScroll({
@@ -169,6 +169,13 @@ useEffect(() => {
 
  fetchStats();
 }, []);
+
+useEffect(() => {
+  // Reset the loggedOut state when the component mounts, or when the connection state changes
+  if (!loggedOut || isConnected) {
+    setLoggedOut(false);
+  }
+}, [loggedOut, isConnected, setLoggedOut]);
 
 return (
  <div 

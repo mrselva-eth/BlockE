@@ -30,6 +30,10 @@ interface WalletContextType {
   showNetworkAlert: boolean;
   showNetworkSwitchAlert: () => void;
   hideNetworkSwitchAlert: () => void;
+  isWalletLocked: boolean;
+  setIsWalletLocked: React.Dispatch<React.SetStateAction<boolean>>;
+  loggedOut: boolean;
+  setLoggedOut: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
@@ -51,6 +55,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [initialLoad, setInitialLoad] = useState(true); // Add initialLoad state
   const [showNetworkAlert, setShowNetworkAlert] = useState(false)
   const [isAutoDisconnectEnabled, setIsAutoDisconnectEnabled] = useState(true);
+  const [isWalletLocked, setIsWalletLocked] = useState(false);
+  const [loggedOut, setLoggedOut] = useState(false);
 
 
   const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -168,6 +174,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         window.ethereum.removeAllListeners()
       }
 
+      setLoggedOut(true); // Set loggedOut to true when disconnecting
       setShowDisconnectAnimation(false)
     }, 0)
   }, [])
@@ -257,7 +264,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       } else if (provider._state.isUnlocked === false) {
         // Wallet is locked, prompt user to unlock
-        throw new Error("Please unlock your MetaMask wallet.")
+        setIsWalletLocked(true); // Set isWalletLocked to true if locked
+        return; // Stop further execution
       }
 
       // Request accounts and handle potential pending requests
@@ -476,6 +484,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     showNetworkAlert,
     showNetworkSwitchAlert,
     hideNetworkSwitchAlert,
+    isWalletLocked,
+    setIsWalletLocked,
+    loggedOut,
+    setLoggedOut,
   }
 
   return (
