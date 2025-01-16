@@ -59,6 +59,8 @@ const messageContainerRef = useRef<HTMLDivElement>(null)
 const { profileData } = useProfile(address)
 const [beTokenBalance, setBeTokenBalance] = useState<number>(0);
 const [transactionStatus, setTransactionStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
+const [newMessageReceived, setNewMessageReceived] = useState(false);
+const audioRef = useRef<HTMLAudioElement | null>(null);
 
 useEffect(() => {
   const fetchBeTokenBalance = async () => {
@@ -126,6 +128,43 @@ useEffect(() => {
    return () => clearInterval(interval)
  }
 }, [selectedEntity, address, fetchMessages])
+
+useEffect(() => {
+  if (newMessageReceived && audioRef.current) {
+    audioRef.current.play().catch(error => {
+      console.error("Failed to play notification sound:", error);
+    });
+    setNewMessageReceived(false);
+  }
+}, [newMessageReceived]);
+
+useEffect(() => {
+  if (selectedEntity && address) {
+    const lastMessage = messages[messages.length - 1];
+
+    const checkNewMessages = async () => {
+      const response = await fetch(
+        `/api/messages?senderAddress=${address}&receiverAddress=${selectedAddress}&isGroup=${isGroup}`
+      );
+      if (!response.ok) {
+        console.error('Failed to fetch messages for new message check');
+        return;
+      }
+
+      const fetchedMessages = await response.json();
+      if (
+        fetchedMessages.length > 0 &&
+        (!lastMessage || fetchedMessages[fetchedMessages.length - 1]._id !== lastMessage._id)
+      ) {
+        setNewMessageReceived(true); // Set newMessageReceived to true when a new message arrives
+        fetchMessages(); // Fetch and display the new messages
+      }
+    };
+
+    const interval = setInterval(checkNewMessages, 2000); // Check every 2 seconds
+    return () => clearInterval(interval);
+  }
+}, [messages, selectedEntity, address, selectedAddress, isGroup, fetchMessages]);
 
 const handleSendMessage = async () => {
  if (!message.trim() || !selectedEntity || !address) return
@@ -257,7 +296,7 @@ return (
    {/* Background image with overlay */}
    <div className="absolute inset-0 z-0">
      <Image
-       src="/chatback.png"
+       src="/chatback.gif"
        alt="Chat Background"
        layout="fill"
        objectFit="cover"
@@ -398,6 +437,7 @@ return (
           isCornerNotification
         />
       )}
+     <audio ref={audioRef} src="/notification.mp3" preload="auto" />
  </div>
 )
 }
