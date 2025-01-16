@@ -21,6 +21,7 @@ import BlockEFooter from '@/components/BlockEFooter'
 import FeatureSection from '@/components/FeatureSection'
 import ConditionalCryptoStatsTicker from '@/components/ConditionalCryptoStatsTicker'
 import Loader from '@/components/Loader'; // Import Loader component
+import AnnouncementAlert from '@/components/AnnouncementAlert'; // Import the component
 
 
 const AnimatedNumber = ({ value }: { value: number }) => {
@@ -179,6 +180,7 @@ return (
    {isConnected && <Sidebar />}
    <main className="relative z-10">
      <ConditionalCryptoStatsTicker />
+     <AnnouncementAlert /> {/* Added AnnouncementAlert component */}
      <section className="h-screen flex flex-col items-center justify-center text-center px-4 relative overflow-hidden">
        <motion.div 
          className="absolute inset-0 z-0"

@@ -27,6 +27,7 @@ const [showMintedAlert, setShowMintedAlert] = useState(false)
 const [showTransactionRejected, setShowTransactionRejected] = useState(false)
 const [showCongratulation, setShowCongratulation] = useState(false)
 const [showInsufficientBalanceAlert, setShowInsufficientBalanceAlert] = useState(false);
+const [showDetails, setShowDetails] = useState(false) // Added state variable
 const router = useRouter()
 
 const handleMint = async () => {
@@ -152,6 +153,26 @@ return (
         </span>
       </button>
 
+      <button
+        onClick={() => setShowDetails(!showDetails)}
+        className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-colors w-full"
+      >
+        {showDetails ? 'Hide Details' : 'Show Cost Details'}
+      </button>
+
+      {showDetails && (
+        <div className="mt-4 p-4 bg-white/80 backdrop-blur-sm rounded-lg border border-purple-200">
+          <h4 className="text-lg font-semibold mb-2">UID Cost Based on Digits</h4>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>1-3 digits: 20000 BE</li>
+            <li>4-5 digits: 15000 BE</li>
+            <li>6-7 digits: 8000 BE</li>
+            <li>8-10 digits: 4000 BE</li>
+            <li>10+ digits: 500 BE</li>
+          </ul>
+        </div>
+      )}
+
       {(error || fetchError) && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
           <AlertCircle className="text-red-500" size={20} />
@@ -258,4 +279,3 @@ return (
 </div>
 )
 }
-
