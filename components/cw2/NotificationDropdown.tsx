@@ -15,6 +15,10 @@ interface NotificationDropdownProps {
   onNotificationClick: (notificationId: string) => void;
 }
 
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+};
+
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ notifications, onNotificationClick }) => {
   return (
     <div className="fixed top-20 right-4 w-80 bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border-2 border-purple-400 z-[9999]">
@@ -29,9 +33,14 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ notificatio
               onClick={() => onNotificationClick(notification._id)}
             >
               <p className="text-sm">{notification.content}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {format(new Date(notification.createdAt), 'MMM d, yyyy HH:mm')}
-              </p>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-gray-500">
+                  {format(new Date(notification.createdAt), 'MMM d, yyyy HH:mm')}
+                </p>
+                <button onClick={() => copyToClipboard(notification.userAddress)} className="text-xs text-purple-600 hover:text-purple-700 px-2 py-1 rounded-md hover:bg-purple-50">
+                  Copy
+                </button>
+              </div>
             </div>
           ))
         ) : (

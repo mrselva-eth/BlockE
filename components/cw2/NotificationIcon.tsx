@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Bell } from 'lucide-react'
+import { Bell, Copy, Check } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
 import { format } from 'date-fns'
 
@@ -18,11 +18,14 @@ interface Notification {
   createdAt: string;
 }
 
+
 export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
   const { address } = useWallet()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [copiedNotification, setCopiedNotification] = useState<string | null>(null)
+
 
   const fetchNotifications = useCallback(async () => {
     if (!address) return
@@ -64,6 +67,20 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
     }
   }
 
+  const handleCopy = (userAddress: string, notificationId: string) => {
+    copyToClipboard(userAddress)
+    setCopiedNotification(notificationId)
+    setTimeout(() => setCopiedNotification(null), 2000)
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  const truncateAddress = (addr: string) => {
+    return `${addr.slice(0, 5)}...${addr.slice(-3)}`
+  }
+
   return (
     <div className="relative">
       <button
@@ -77,7 +94,7 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
           </span>
         )}
       </button>
-      
+
       {showNotifications && (
         <div className="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border-2 border-purple-400 z-[9999]">
           <div className="max-h-96 overflow-y-auto divide-y divide-purple-200">
@@ -90,10 +107,21 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
                   } hover:bg-purple-100/50`}
                   onClick={() => handleNotificationClick(notification._id)}
                 >
-                  <p className="text-sm">{notification.content}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {format(new Date(notification.createdAt), 'MMM d, yyyy HH:mm')}
+                  <p className="text-sm">
+                    New message from {truncateAddress(notification.userAddress)}
                   </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-gray-500">
+                      {format(new Date(notification.createdAt), 'MMM d, yyyy HH:mm')}
+                    </p>
+                    <button onClick={() => handleCopy(notification.userAddress, notification._id)} className="text-xs text-purple-600 hover:text-purple-700 px-2 py-1 rounded-md hover:bg-purple-50">
+                      {copiedNotification === notification._id ? (
+                        <Check size={18} className="text-green-500" />
+                      ) : (
+                        <Copy size={18} />
+                      )}
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (

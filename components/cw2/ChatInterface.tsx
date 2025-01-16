@@ -59,6 +59,7 @@ const messageContainerRef = useRef<HTMLDivElement>(null)
 const { profileData } = useProfile(address)
 const [beTokenBalance, setBeTokenBalance] = useState<number>(0);
 const [transactionStatus, setTransactionStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
+const [showTransactionStatus, setShowTransactionStatus] = useState(false); // New state for controlling visibility
 const [newMessageReceived, setNewMessageReceived] = useState(false);
 const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -214,6 +215,13 @@ const handleSendMessage = async () => {
    }
 
    setTransactionStatus('success'); // Set transaction status to success
+   setShowTransactionStatus(true); // Show the transaction status component
+
+   setTimeout(() => {
+     setTransactionStatus('idle'); // Reset transaction status
+     setShowTransactionStatus(false); // Hide the transaction status component
+   }, 2000); // Hide after 2 seconds
+
    setMessage('');
    await fetchMessages();
 
@@ -296,7 +304,7 @@ return (
    {/* Background image with overlay */}
    <div className="absolute inset-0 z-0">
      <Image
-       src="/chatback.gif"
+       src="/chatback.png"
        alt="Chat Background"
        layout="fill"
        objectFit="cover"
@@ -422,21 +430,24 @@ return (
        onClose={() => setExceptionMessage(null)}
      />
    )}
-   {transactionStatus !== 'idle' && (
-        <TransactionStatus
-          isProcessing={transactionStatus === 'pending'}
-          isCompleted={transactionStatus === 'success'}
-          message={
-            transactionStatus === 'pending'
-              ? 'Sending message...'
-              : transactionStatus === 'success'
-              ? 'Message sent!'
-              : 'Message failed to send.'
-          }
-          onClose={() => setTransactionStatus('idle')}
-          isCornerNotification
-        />
-      )}
+   {showTransactionStatus && ( // Render only when showTransactionStatus is true
+       <TransactionStatus
+         isProcessing={transactionStatus === 'pending'}
+         isCompleted={transactionStatus === 'success'}
+         message={
+           transactionStatus === 'pending'
+             ? 'Sending message...'
+             : transactionStatus === 'success'
+             ? 'Message sent!'
+             : 'Message failed to send.'
+         }
+         onClose={() => {
+           setTransactionStatus('idle');
+           setShowTransactionStatus(false); // Hide the component when closed
+         }}
+         isCornerNotification
+       />
+     )}
      <audio ref={audioRef} src="/notification.mp3" preload="auto" />
  </div>
 )
