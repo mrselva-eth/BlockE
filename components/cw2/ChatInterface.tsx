@@ -12,7 +12,7 @@ import ExceptionMessage from './ExceptionMessage'
 import { useProfile } from '@/hooks/useProfile'
 import { BE_TOKEN_ABI, BE_TOKEN_ADDRESS } from '@/utils/beTokenABI';
 import { ethers } from 'ethers';
-import TransactionStatus from '../TransactionStatus';
+import TransactionStatus from '@/components/TransactionStatus'; // Import from '@/components...'
 
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false })
 
@@ -59,8 +59,8 @@ const messageContainerRef = useRef<HTMLDivElement>(null)
 const { profileData } = useProfile(address)
 const [beTokenBalance, setBeTokenBalance] = useState<number>(0);
 const [transactionStatus, setTransactionStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
-const [showTransactionStatus, setShowTransactionStatus] = useState(false); // New state for controlling visibility
-const [newMessageReceived, setNewMessageReceived] = useState(false);
+const [showTransactionStatus, setShowTransactionStatus] = useState(false); 
+const [newMessageSound, setNewMessageSound] = useState(false); 
 const audioRef = useRef<HTMLAudioElement | null>(null);
 
 useEffect(() => {
@@ -131,13 +131,11 @@ useEffect(() => {
 }, [selectedEntity, address, fetchMessages])
 
 useEffect(() => {
-  if (newMessageReceived && audioRef.current) {
-    audioRef.current.play().catch(error => {
-      console.error("Failed to play notification sound:", error);
-    });
-    setNewMessageReceived(false);
+  if (newMessageSound && audioRef.current) {
+    audioRef.current.play();
+    setNewMessageSound(false); 
   }
-}, [newMessageReceived]);
+}, [newMessageSound]);
 
 useEffect(() => {
   if (selectedEntity && address) {
@@ -157,15 +155,16 @@ useEffect(() => {
         fetchedMessages.length > 0 &&
         (!lastMessage || fetchedMessages[fetchedMessages.length - 1]._id !== lastMessage._id)
       ) {
-        setNewMessageReceived(true); // Set newMessageReceived to true when a new message arrives
-        fetchMessages(); // Fetch and display the new messages
+        setNewMessageSound(true); 
+        fetchMessages(); 
       }
     };
 
-    const interval = setInterval(checkNewMessages, 2000); // Check every 2 seconds
+    const interval = setInterval(checkNewMessages, 2000); 
     return () => clearInterval(interval);
   }
 }, [messages, selectedEntity, address, selectedAddress, isGroup, fetchMessages]);
+
 
 const handleSendMessage = async () => {
  if (!message.trim() || !selectedEntity || !address) return
@@ -178,7 +177,8 @@ const handleSendMessage = async () => {
 
  setIsLoading(true);
  setError(null);
- setTransactionStatus('pending'); // Set transaction status to pending
+ setTransactionStatus('pending'); // Set status to pending
+ setShowTransactionStatus(true); // Show transaction status component
 
  try {
    const encryptedMsg = await encryptMessage(message, selectedAddress!);
@@ -190,7 +190,7 @@ const handleSendMessage = async () => {
      setBeTokenBalance(prevBalance => prevBalance - 1);
    } catch (error) {
      console.error('Failed to send message on-chain:', error);
-     setTransactionStatus('error'); // Set transaction status to error
+     setTransactionStatus('error'); // Set status to error in case of failure
      setExceptionMessage('Failed to send message on-chain. Please try again.');
      return;
    }
@@ -214,13 +214,13 @@ const handleSendMessage = async () => {
      throw new Error('Failed to send message');
    }
 
-   setTransactionStatus('success'); // Set transaction status to success
-   setShowTransactionStatus(true); // Show the transaction status component
+   setTransactionStatus('success'); 
+   
 
    setTimeout(() => {
-     setTransactionStatus('idle'); // Reset transaction status
-     setShowTransactionStatus(false); // Hide the transaction status component
-   }, 2000); // Hide after 2 seconds
+     setTransactionStatus('idle'); 
+     setShowTransactionStatus(false); 
+   }, 2000); 
 
    setMessage('');
    await fetchMessages();
@@ -238,7 +238,7 @@ const handleSendMessage = async () => {
    })
  } catch (err: any) {
    console.error('Failed to send message:', err);
-   setTransactionStatus('error'); // Set transaction status to error
+   setTransactionStatus('error'); // Set status to error in case of failure
    if (err.code === 4001) {
      setExceptionMessage('Transaction rejected. Please try again.');
    } else {
@@ -430,7 +430,7 @@ return (
        onClose={() => setExceptionMessage(null)}
      />
    )}
-   {showTransactionStatus && ( // Render only when showTransactionStatus is true
+   {showTransactionStatus && ( // Conditionally render TransactionStatus
        <TransactionStatus
          isProcessing={transactionStatus === 'pending'}
          isCompleted={transactionStatus === 'success'}
@@ -443,9 +443,9 @@ return (
          }
          onClose={() => {
            setTransactionStatus('idle');
-           setShowTransactionStatus(false); // Hide the component when closed
+           setShowTransactionStatus(false); 
          }}
-         isCornerNotification
+         isCornerNotification={false} // Set to false for full-screen modal
        />
      )}
      <audio ref={audioRef} src="/notification.mp3" preload="auto" />

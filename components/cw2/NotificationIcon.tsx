@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Bell, Copy, Check } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
 import { format } from 'date-fns'
@@ -25,7 +25,8 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
   const [copiedNotification, setCopiedNotification] = useState<string | null>(null)
-
+  const [newMessageSound, setNewMessageSound] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!address) return
@@ -35,13 +36,23 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
       if (!response.ok) {
         throw new Error('Failed to fetch notifications')
       }
-      const fetchedNotifications = await response.json()
+      const fetchedNotifications = await response.json() as Notification[]
       setNotifications(fetchedNotifications)
-      setUnreadCount(fetchedNotifications.filter((n: Notification) => !n.read).length)
+      setUnreadCount(fetchedNotifications.filter(n => !n.read).length)
+
+      // Check for new notifications
+      if (fetchedNotifications.length > 0) {
+        const lastMessage = fetchedNotifications[0]; // The latest notification is at index 0 due to sorting
+        if (!lastMessageRef.current || lastMessage._id !== lastMessageRef.current._id) {
+          // New notification arrived, play sound
+          setNewMessageSound(true);
+          lastMessageRef.current = lastMessage; // Update last message reference
+        }
+      }
     } catch (err) {
       console.error('Failed to fetch notifications:', err)
     }
-  }, [address])
+  }, [address, setNewMessageSound])
 
   useEffect(() => {
     fetchNotifications()
@@ -80,6 +91,16 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
   const truncateAddress = (addr: string) => {
     return `${addr.slice(0, 5)}...${addr.slice(-3)}`
   }
+
+  useEffect(() => {
+    if (newMessageSound && audioRef.current) {
+      audioRef.current.play();
+      setNewMessageSound(false); // Reset the state to prevent continuous playback
+    }
+  }, [newMessageSound]);
+
+
+  const lastMessageRef = useRef<Notification | null>(null)
 
   return (
     <div className="relative">
@@ -130,6 +151,7 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
           </div>
         </div>
       )}
+      <audio ref={audioRef} src="/notification.mp3" preload="auto" />
     </div>
   )
 }

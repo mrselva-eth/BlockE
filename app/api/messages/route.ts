@@ -74,14 +74,23 @@ export async function POST(request: Request) {
 
     console.log("Message saved to database:", result.insertedId);
 
-    // Create a notification for the receiver
-    await db.collection('notifications').insertOne({
+    // Create a notification for the receiver ONLY IF it's a new message
+    const existingNotification = await db.collection('notifications').findOne({
       userAddress: receiverAddress.toLowerCase(),
-      type: 'newMessage',
-      content: `New message from ${senderAddress}`,
-      read: false,
-      createdAt: new Date()
+      'content': { $regex: `New message from ${senderAddress}`, $options: 'i' } // Case-insensitive search
     })
+
+    if (!existingNotification) { // Only create if a similar notification doesn't exist
+      await db.collection('notifications').insertOne({
+        userAddress: receiverAddress.toLowerCase(),
+        type: 'newMessage',
+        content: `New message from ${senderAddress}`,
+        read: false,
+        createdAt: new Date()
+      })
+    } else {
+      console.warn('Notification already exists, skipping creation.')
+    }
 
     return NextResponse.json({ 
       _id: result.insertedId.toString(),
