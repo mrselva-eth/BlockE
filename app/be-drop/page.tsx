@@ -14,6 +14,7 @@ import { useStakingData } from '@/hooks/useStakingData';
 import Sidebar from '@/components/Sidebar';
 import SocialMediaLinks from '@/components/SocialMediaLinks';
 import TransactionStatus from '@/components/TransactionStatus';
+import Loader from '@/components/Loader'; // Import the Loader component
 
 interface BEDropProps {
  hasUID: boolean;
@@ -606,39 +607,65 @@ const BEDrop: React.FC<BEDropProps> = ({ hasUID }) => {
     const updatedTasks = [...tasks];
     const task = updatedTasks[taskIndex];
 
-    if (task.countThresholds) {
-      const count = task.title.includes('Stake')
-        ? stakingData.stakeCount
-        : task.title.includes('Claim')
-        ? stakingData.claimCount
-        : stakingData.unstakeCount;
+    try {
+      if (task.countThresholds) {
+        const count = task.title.includes('Stake')
+          ? stakingData.stakeCount
+          : task.title.includes('Claim')
+          ? stakingData.claimCount
+          : stakingData.unstakeCount;
 
-      task.completed = count >= task.countThresholds[0];
-    } else {
-      updatedTasks[taskIndex].completed = await updatedTasks[taskIndex].checkCompletion();
-    }
-    setTasks(updatedTasks);
+        task.completed = count >= task.countThresholds[0];
+      } else {
+        updatedTasks[taskIndex].completed = await updatedTasks[taskIndex].checkCompletion();
+      }
 
-    if (taskIndex === 0 && updatedTasks[taskIndex].completed) {
-      try {
-        if (!address) return
-        const provider = new ethers.BrowserProvider(window.ethereum)
-        const signer = await provider.getSigner()
-        const beTokenContract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, signer)
-        const tx = await beTokenContract.mint()
-        await tx.wait()
+      if (taskIndex === 0 && updatedTasks[taskIndex].completed && !hasClaimedFreeBE) {
+        try {
+          if (!address) return
+          const provider = new ethers.BrowserProvider(window.ethereum)
+          const signer = await provider.getSigner()
+          const beTokenContract = new ethers.Contract(BE_TOKEN_ADDRESS, BE_TOKEN_ABI, signer)
+          const tx = await beTokenContract.mint()
+          await tx.wait()
 
-        // Update hasClaimedFreeBE state
-        setHasClaimedFreeBE(true);
-      } catch (error: any) {
-        console.error('Error minting free BE:', error)
-        if (error && error.message) {
-          alert(error.message)
-        } else {
-          alert('Failed to mint BE. Please try again.')
+          // Update hasClaimedFreeBE state
+          setHasClaimedFreeBE(true);
+        } catch (error: any) {
+          console.error('Error minting free BE:', error)
+          if (error && error.message) {
+            alert(error.message)
+          } else {
+            alert('Failed to mint BE. Please try again.')
+          }
+          updatedTasks[taskIndex].completed = false;
+          setTasks(updatedTasks);
         }
-        updatedTasks[taskIndex].completed = false;
-        setTasks(updatedTasks);
+      }
+
+      // Refetch all tasks after completion check
+      const newTasks = await Promise.all(
+        tasks.map(async (t, i) => ({
+          ...t,
+          completed: await t.checkCompletion(),
+        }))
+      );
+      setTasks(newTasks);
+
+      //Recalculate Airdrop balance
+      let newBalance = 0;
+      for (const task of newTasks) {
+        if (task.completed) {
+          newBalance += task.reward
+        }
+      }
+      setAirdropBalance(newBalance);
+    } catch (error: any) {
+      console.error('Error handling task completion:', error);
+      if (error && error.message) {
+        alert(error.message);
+      } else {
+        alert('An error occurred. Please try again.');
       }
     }
   };
@@ -688,6 +715,17 @@ const BEDrop: React.FC<BEDropProps> = ({ hasUID }) => {
 
   if (!isConnected) {
     return <div>Connect your wallet to participate in the BE airdrop.</div>;
+  }
+
+  if (tasks.length === 0) { // Check if tasks are still loading
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm">
+        <div className="bg-white rounded-lg p-8 shadow-xl">
+          <Loader size={48} className="text-purple-500 mx-auto mb-4 animate-spin" />
+          <p className="text-lg text-gray-700">Loading tasks...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -748,7 +786,7 @@ const BEDrop: React.FC<BEDropProps> = ({ hasUID }) => {
             {tasks.map((task, index) => (
               <div
                 key={task.title}
-                className="bg-white/95 dark:bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-purple-200 transform hover:scale-[1.02] transition-transform duration-300"
+                className="bg-white/95 dark:bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-purple-200 transform hover:scale-[1.02] transition-transform duration-300 h-[320px] flex flex-col"
               >
                 <div className="flex items-center gap-2 mb-4">
                   {task.completed ? (
@@ -760,19 +798,22 @@ const BEDrop: React.FC<BEDropProps> = ({ hasUID }) => {
                 </div>
                 <p className="text-gray-600 dark:text-gray-300 mb-4">{task.description}</p>
                 <p className="text-purple-600 font-medium mb-6">Reward: {task.reward} BE</p>
-                <button
-                  onClick={() => handleTaskCompletion(index)}
-                  disabled={task.completed || (index === 0 && hasClaimedFreeBE)}
-                  className={`w-full px-4 py-2 rounded-lg text-white font-medium transition-colors duration-300 ${
-                    task.completed
-                      ? 'bg-green-500 cursor-default'
-                      : index === 0 && !hasClaimedFreeBE
-                      ? 'bg-gradient-to-r from-blockchain-blue to-blockchain-purple hover:from-purple-600 hover:to-pink-600'
-                      : 'bg-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  {task.completed ? 'Completed' : index === 0 ? 'Claim Now' : 'Mint BEUID'}
-                </button>
+                <div className="mt-auto"> {/* Added mt-auto div */}
+                  <button
+                    onClick={() => handleTaskCompletion(index)}
+                    disabled={task.completed || (index === 0 && hasClaimedFreeBE)}
+                    className={`w-full px-4 py-2 rounded-lg text-white font-medium transition-colors duration-300 ${
+                      task.completed
+                        ? 'bg-green-500 cursor-default'
+                        : index === 0 && !hasClaimedFreeBE
+                        ? 'bg-gradient-to-r from-blockchain-blue to-blockchain-purple hover:from-purple-600 hover:to-pink-600'
+                        : 'bg-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {task.completed ? 'Completed' : index === 0 ? 'Claim Now' : 'Mint BEUID'}
+                  </button>
+                </div> {/* Added mt-auto                  </button>
+                </div> {/* Added mt-auto div */}
               </div>
             ))}
           </div>

@@ -39,12 +39,14 @@ export default function WalletModal() {
   const recaptchaRef = useRef<ReCAPTCHA>(null)
   const [error, setError] = useState<string | null>(null)
   const [captchaVerified, setCaptchaVerified] = useState(false)
+  const [showUnlockMessage, setShowUnlockMessage] = useState(false) // Added state variable
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 
   useEffect(() => {
     if (showWalletModal) {
       setCaptchaVerified(false)
       setError(null)
+      setShowUnlockMessage(false) //Added to reset unlock message on modal open
       if (recaptchaRef.current) {
         recaptchaRef.current.reset()
       }
@@ -76,7 +78,12 @@ export default function WalletModal() {
 
   const handleWalletClick = async (walletId: string) => {
     setError(null)
-    setIsWalletLocked(false);
+
+    if (isWalletLocked) {
+      setShowUnlockMessage(true)
+      return
+    }
+    setIsWalletLocked(false)
     try {
       await connectWallet(walletId)
     } catch (error: any) {
@@ -115,6 +122,29 @@ export default function WalletModal() {
               className="mt-2 text-sm text-red-600 hover:text-red-700 underline"
             >
               Try again
+            </button>
+          </div>
+        )}
+
+        {showUnlockMessage && ( // Added conditional render for unlock message
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-100 rounded-lg flex items-center gap-2">
+            <div className="w-16 h-16 relative">
+              <Image
+                src="/unlock.gif"
+                alt="Unlock Wallet"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div className="flex flex-col">
+              <p className="text-yellow-700 font-medium">Wallet Locked</p>
+              <p className="text-yellow-600 mt-1 text-sm">Please unlock your wallet to connect.</p>
+            </div>
+            <button
+              onClick={() => setShowUnlockMessage(false)}
+              className="ml-auto text-gray-600 hover:text-gray-800"
+            >
+              <X size={16} />
             </button>
           </div>
         )}
