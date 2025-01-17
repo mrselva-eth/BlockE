@@ -12,7 +12,6 @@ import { ChevronDown, Zap, Binary, Bot, BarChart2, Coins, Gift, Shield } from 'l
 import ScrollIndicator from '@/components/ScrollIndicator'
 import FeatureCard from '@/components/FeatureCard'
 import SectionTitle from '@/components/SectionTitle'
-import FloatingParticles from '@/components/FloatingParticles'
 import ThemeToggle from '@/components/ThemeToggle'
 import ScrollSection from '@/components/ScrollSection'
 import RoadmapSection from '@/components/RoadmapSection'
@@ -246,7 +245,6 @@ return (
            <ThemeToggle />
          </motion.div>
        </motion.div>
-       <FloatingParticles />
 
        <motion.div
          className="hidden md:block fixed w-20 h-20 rounded-full bg-gradient-to-r from-blockchain-blue to-blockchain-purple opacity-20 pointer-events-none"
