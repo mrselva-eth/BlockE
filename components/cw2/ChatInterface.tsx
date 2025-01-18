@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
 import { Send, Smile, Users } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
 import dynamic from 'next/dynamic'
@@ -304,7 +304,7 @@ return (
    {/* Background image with overlay */}
    <div className="absolute inset-0 z-0">
      <Image
-       src="/chatback.png"
+       src="/chatback.gif"
        alt="Chat Background"
        layout="fill"
        objectFit="cover"
@@ -354,42 +354,69 @@ return (
              key={message._id}
              className={`flex items-start gap-3 ${isSender ? 'justify-end' : 'justify-start'}`}
            >
-             {isSender && (
-               <span className="text-xs text-gray-500 mt-1">
-                 {format(new Date(message.createdAt), 'HH:mm')}
-               </span>
+             {isSender ? (
+               <Fragment>
+                 <div
+                   className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                     isSender
+                       ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                       : 'bg-white/80 border border-gray-200'
+                   }`}
+                 >
+                   {isGroup && !isSender && (
+                     <p className="text-xs font-medium mb-1 opacity-75">
+                       {message.senderAddress.slice(0, 6)}...{message.senderAddress.slice(-4)}
+                     </p>
+                   )}
+                   <p className="break-words whitespace-pre-wrap">{message.decryptedMessage}</p>
+                 </div>
+                 <span className="text-xs text-gray-500 mt-1">
+                   {format(new Date(message.createdAt), 'HH:mm')}
+                 </span>
+                 {message.role === 'user' && (
+                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                     <Image
+                       src={profileData?.profileImage || "/user.png"}
+                       alt="User"
+                       width={32}
+                       height={32}
+                       className="object-cover"
+                     />
+                   </div>
+                 )}
+               </Fragment>
+             ) : (
+               <Fragment>
+                 <span className="text-xs text-gray-500 mt-1">
+                   {format(new Date(message.createdAt), 'HH:mm')}
+                 </span>
+                 <div
+                   className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                     isSender
+                       ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                       : 'bg-white/80 border border-gray-200'
+                   }`}
+                 >
+                   {isGroup && !isSender && (
+                     <p className="text-xs font-medium mb-1 opacity-75">
+                       {message.senderAddress.slice(0, 6)}...{message.senderAddress.slice(-4)}
+                     </p>
+                   )}
+                   <p className="break-words whitespace-pre-wrap">{message.decryptedMessage}</p>
+                 </div>
+                 {message.role === 'user' && (
+                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                     <Image
+                       src={profileData?.profileImage || "/user.png"}
+                       alt="User"
+                       width={32}
+                       height={32}
+                       className="object-cover"
+                     />
+                   </div>
+                 )}
+               </Fragment>
              )}
-             <div
-               className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                 isSender
-                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                   : 'bg-white/80 border border-gray-200'
-               }`}
-             >
-               {isGroup && !isSender && (
-                 <p className="text-xs font-medium mb-1 opacity-75">
-                   {message.senderAddress.slice(0, 6)}...{message.senderAddress.slice(-4)}
-                 </p>
-               )}
-               <p className="break-words whitespace-pre-wrap">{message.decryptedMessage}</p>
-             </div>
-             {!isSender && (
-               <span className="text-xs text-gray-500 mt-1">
-                 {format(new Date(message.createdAt), 'HH:mm')}
-               </span>
-             )}
-             {message.role === 'user' && (
-               <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                 <Image
-                   src={profileData?.profileImage || "/user.png"}
-                   alt="User"
-                   width={32}
-                   height={32}
-                   className="object-cover"
-                 />
-               </div>
-             )}
-
            </div>
          )
          return acc

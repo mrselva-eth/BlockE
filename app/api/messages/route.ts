@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       await db.collection('notifications').insertOne({
         userAddress: receiverAddress.toLowerCase(),
         type: 'newMessage',
-        content: `New message from ${senderAddress.toLowerCase()}`, // Display sender's address
+        content: `New message from ${senderAddress.toLowerCase().slice(0, 5)}...${senderAddress.toLowerCase().slice(-3)}`, // Shorten address
         read: false,
         createdAt: new Date()
       })
