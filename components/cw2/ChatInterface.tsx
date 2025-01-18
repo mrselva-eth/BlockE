@@ -304,7 +304,7 @@ return (
    {/* Background image with overlay */}
    <div className="absolute inset-0 z-0">
      <Image
-       src="/chatback.gif"
+       src="/chatback.png"
        alt="Chat Background"
        layout="fill"
        objectFit="cover"
