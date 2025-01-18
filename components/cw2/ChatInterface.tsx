@@ -304,7 +304,7 @@ return (
    {/* Background image with overlay */}
    <div className="absolute inset-0 z-0">
      <Image
-       src="/chatback.png"
+       src="/chatback.gif"
        alt="Chat Background"
        layout="fill"
        objectFit="cover"
@@ -352,7 +352,7 @@ return (
          acc.push(
            <div
              key={message._id}
-             className={`flex items-start gap-3 ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
+             className={`flex items-start gap-3 ${isSender ? 'justify-end' : 'justify-start'}`}
            >
              <div
                className={`max-w-[70%] rounded-2xl px-4 py-2 ${
