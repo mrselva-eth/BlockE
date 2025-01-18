@@ -40,11 +40,13 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
       setNotifications(fetchedNotifications)
       setUnreadCount(fetchedNotifications.filter(n => !n.read).length)
 
+      // Check for new notifications
       if (fetchedNotifications.length > 0) {
-        const lastMessage = fetchedNotifications[0];
+        const lastMessage = fetchedNotifications[0]; // The latest notification is at index 0 due to sorting
         if (!lastMessageRef.current || lastMessage._id !== lastMessageRef.current._id) {
+          // New notification arrived, play sound
           setNewMessageSound(true);
-          lastMessageRef.current = lastMessage;
+          lastMessageRef.current = lastMessage; // Update last message reference
         }
       }
     } catch (err) {
@@ -93,7 +95,7 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
   useEffect(() => {
     if (newMessageSound && audioRef.current) {
       audioRef.current.play();
-      setNewMessageSound(false);
+      setNewMessageSound(false); // Reset the state to prevent continuous playback
     }
   }, [newMessageSound]);
 
@@ -103,48 +105,48 @@ export default function NotificationIcon({ size = 32 }: NotificationIconProps) {
   return (
     <div className="relative">
       <button
-        className={`p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white/95 transition-colors border-2 border-purple-400 dark:bg-gray-800 dark:border-purple-800 dark:hover:bg-gray-700`}
+        className={`p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white/95 transition-colors border-2 border-purple-400`}
         onClick={() => setShowNotifications(!showNotifications)}
       >
-        <Bell size={size * 0.75} className="text-purple-600 dark:text-purple-300" />
+        <Bell size={size * 0.75} className="text-purple-600" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center dark:from-purple-400 dark:to-pink-400">
+          <span className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
             {unreadCount}
           </span>
         )}
       </button>
 
       {showNotifications && (
-        <div className="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border-2 border-purple-400 z-[9999] dark:bg-gray-800 dark:border-purple-800">
-          <div className="max-h-96 overflow-y-auto divide-y divide-purple-200 dark:divide-purple-700">
+        <div className="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border-2 border-purple-400 z-[9999]">
+          <div className="max-h-96 overflow-y-auto divide-y divide-purple-200">
             {notifications.length > 0 ? (
               notifications.map((notification) => (
                 <div
                   key={notification._id}
                   className={`p-4 cursor-pointer transition-colors ${
-                    notification.read ? 'bg-white/50 dark:bg-gray-700/50' : 'bg-purple-50 dark:bg-purple-700/50'
-                  } hover:bg-purple-100/50 dark:hover:bg-purple-700/50`}
+                    notification.read ? 'bg-white/50' : 'bg-purple-50'
+                  } hover:bg-purple-100/50`}
                   onClick={() => handleNotificationClick(notification._id)}
                 >
-                  <p className="text-sm dark:text-gray-300">
+                  <p className="text-sm">
                     New message from {truncateAddress(notification.userAddress)}
                   </p>
                   <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500">
                       {format(new Date(notification.createdAt), 'MMM d, yyyy HH:mm')}
                     </p>
-                    <button onClick={() => handleCopy(notification.userAddress, notification._id)} className="text-xs text-purple-600 hover:text-purple-700 px-2 py-1 rounded-md hover:bg-purple-50 dark:text-purple-300 dark:hover:text-purple-400 dark:hover:bg-purple-700/50">
+                    <button onClick={() => handleCopy(notification.userAddress, notification._id)} className="text-xs text-purple-600 hover:text-purple-700 px-2 py-1 rounded-md hover:bg-purple-50">
                       {copiedNotification === notification._id ? (
-                        <Check size={18} className="text-green-500 dark:text-green-400" />
+                        <Check size={18} className="text-green-500" />
                       ) : (
-                        <Copy size={18} className="dark:text-purple-300" />
+                        <Copy size={18} />
                       )}
                     </button>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="p-4 text-center text-gray-500 dark:text-gray-400">No notifications</div>
+              <div className="p-4 text-center text-gray-500">No notifications</div>
             )}
           </div>
         </div>

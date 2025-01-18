@@ -354,6 +354,11 @@ return (
              key={message._id}
              className={`flex items-start gap-3 ${isSender ? 'justify-end' : 'justify-start'}`}
            >
+             {isSender && (
+               <span className="text-xs text-gray-500 mt-1">
+                 {format(new Date(message.createdAt), 'HH:mm')}
+               </span>
+             )}
              <div
                className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                  isSender
@@ -368,9 +373,11 @@ return (
                )}
                <p className="break-words whitespace-pre-wrap">{message.decryptedMessage}</p>
              </div>
-             <span className="text-xs text-gray-500 mt-1">
-               {format(new Date(message.createdAt), 'HH:mm')}
-             </span>
+             {!isSender && (
+               <span className="text-xs text-gray-500 mt-1">
+                 {format(new Date(message.createdAt), 'HH:mm')}
+               </span>
+             )}
              {message.role === 'user' && (
                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
                  <Image
@@ -382,6 +389,7 @@ return (
                  />
                </div>
              )}
+
            </div>
          )
          return acc
