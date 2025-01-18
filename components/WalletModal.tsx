@@ -8,14 +8,14 @@ import { X, AlertTriangle } from 'lucide-react'
 
 const wallets = [
 {
-  id: 'metamask',
-  name: 'MetaMask',
-  icon: '/wallets/metamask.png'
-},
-{
   id: 'coinbase',
   name: 'Coinbase',
   icon: '/wallets/coinbase.png'
+},
+{
+  id: 'metamask',
+  name: 'MetaMask',
+  icon: '/wallets/metamask.png'
 },
 {
   id: 'okx',
@@ -175,11 +175,12 @@ return (
             onMouseLeave={() => setShowOverlay(false)}
           >
             {wallets
+              .filter(wallet => wallet.id !== 'metamask')
               .map((wallet) => (
                 <button
                   key={wallet.id}
-                  disabled={wallet.id !== 'metamask'}
-                  className={`w-full flex items-center p-4 rounded-lg border border-gray-200 ${wallet.id !== 'metamask' ? 'opacity-50 cursor-not-allowed' : ''} transition-colors`}
+                  disabled
+                  className="w-full flex items-center p-4 rounded-lg border border-gray-200 opacity-50 cursor-not-allowed transition-colors"
                 >
                   <Image
                     src={wallet.icon || "/placeholder.svg"}
@@ -191,13 +192,14 @@ return (
                   <span className="text-lg font-medium">{wallet.name}</span>
                 </button>
               ))}
-            {/* {showOverlay && (
+            {showOverlay && (
               <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
                 <span className="text-gray-600 font-semibold">Coming Soon</span>
               </div>
-            )} */}
+            )}
           </div>
-          {/* <button
+
+          <button
             key={'metamask'}
             onClick={() => handleWalletClick('metamask')}
             className="w-full flex items-center p-4 rounded-lg border border-gray-200 hover:border-blue-500 transition-colors"
@@ -210,7 +212,7 @@ return (
               className="mr-4"
             />
             <span className="text-lg font-medium">{'MetaMask'}</span>
-          </button> */}
+          </button>
         </div>
       )}
     </div>
