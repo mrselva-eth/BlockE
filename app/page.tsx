@@ -430,7 +430,7 @@ return (
 
            <ScrollSection className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl mb-24">
              <div className="container mx-auto px-4">
-               <SectionTitle>BlockE in Numbers</SectionTitle>
+               <SectionTitle>BlockE User Stats</SectionTitle>
                {statsLoading ? ( // Conditionally render loading state
                  <div className="flex justify-center items-center h-24">
                    <Loader size={24} className="text-purple-500" />
