@@ -72,20 +72,16 @@ export default function Sidebar() {
   }, [handleMouseMove])
 
   const handleItemClick = (item: any) => {
-    if (!isLoading && ownedUIDs.length === 0 && item.name !== "Home" && item.name !== "BlockE UID") {
-      setShowAlert(true)
-    } else {
-      // Add page visit tracking
-      if (address) {
-        fetch("/api/others", {
-          // Update API endpoint
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address, action: "pageVisit", page: item.href }),
-        }).catch((error) => console.error("Error logging page visit:", error))
-      }
-      router.push(item.href)
+    // Add page visit tracking
+    if (address) {
+      fetch("/api/others", {
+        // Update API endpoint
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, action: "pageVisit", page: item.href }),
+      }).catch((error) => console.error("Error logging page visit:", error))
     }
+    router.push(item.href)
   }
 
   return (
@@ -128,7 +124,6 @@ export default function Sidebar() {
           </ul>
         </nav>
       </div>
-      {showAlert && <BlockEUIDAlert />}
     </>
   )
 }
