@@ -810,7 +810,7 @@ const BEDrop: React.FC<BEDropProps> = ({ hasUID }) => {
                         : 'bg-gray-400 cursor-not-allowed'
                     }`}
                   >
-                    {task.completed ? 'Completed' : index === 0 ? 'Claim Now' : 'Mint BEUID'}
+                    {task.completed ? 'Completed' : index === 0 ? 'Claim Now' : 'Not Completed'}
                   </button>
                 </div> {/* Added mt-auto                  </button>
                 </div> {/* Added mt-auto div */}
