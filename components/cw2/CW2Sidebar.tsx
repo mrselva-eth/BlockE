@@ -34,7 +34,12 @@ const allSidebarItems = [
   { name: "Cex and Dex", href: "/cex-and-dex", icon: ArrowLeftRight },
   { name: "BE Drop", href: "/be-drop", icon: Gift }, // BE Drop menu item
   { name: "Predictive Analytics", href: "/predictive-analytics", icon: BarChart2, ceoOnly: true },
-  { name: "Social Media Sentiment Analysis", href: "/sentiment-analysis", icon: MessageCircle, ceoOnly: true },
+  {
+    name: "Social Media Sentiment Analysis",
+    href: "/sentiment-analysis",
+    icon: MessageCircle,
+    ceoOnly: true,
+  },
   { name: "Wallet Clustering", href: "/wallet-clustering", icon: Network, ceoOnly: true },
   { name: "NFT Analytics", href: "/nft-analytics", icon: ImageIcon, ceoOnly: true },
   { name: "Whale Alert", href: "/whale-alert", icon: Whale, ceoOnly: true },
@@ -86,7 +91,7 @@ export default function CW2Sidebar({ isOpen, onClose }: CW2SidebarProps) {
               <Link
                 href={item.href}
                 onClick={() => handlePageVisit(item.href)} // Add onClick handler
-                className={`flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors relative ${
+                className={`flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors relative w-full text-left ${
                   pathname === item.href ? "text-purple-600 dark:text-purple-400 font-semibold" : ""
                 }`}
               >
