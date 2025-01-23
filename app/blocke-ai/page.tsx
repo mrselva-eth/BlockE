@@ -47,7 +47,7 @@ function BlockEAIPage() {
       {/* Background GIF */}
       <div className="fixed inset-0 z-0">
         <Image
-          src="/AIBOT.gif"
+          src="/AIBOT.png"
           alt="AI Bot Background"
           layout="fill"
           objectFit="cover"
